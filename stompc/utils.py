@@ -7,6 +7,22 @@ PI_lower = -3.14
 PI_half_pos = 1.57
 PI_half_neg = -1.57
 
+DIRS = {4: f"Turn {PI_half_neg}",
+        5: f"Turn {PI_half_pos}",
+        6: f"Turn {PI_upper}",
+        10: "0.5 in negative y",
+        11: "0.5 in positive x",
+        12: "0.5 in positive y",
+        13: "0.5 in negative x",
+        10: "0.5 in negative y",
+        11: "0.5 in positive x",
+        12: "0.5 in positive y",
+        13: "0.5 in negative x",
+        20: "1 in negative y",
+        21: "1 in positive x",
+        22: "1 in positive y",
+        23: "1 in negative x",}
+
 def turn_drone(yaw, yaw_dx):
     if yaw >= PI_upper and yaw_dx > 0: 
         yaw = PI_lower + yaw_dx
@@ -22,7 +38,9 @@ def turn_drone(yaw, yaw_dx):
         
     return yaw
 
-
+def store_shielded_state(state: State) -> None:
+    
+    return None
 
 def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
     """

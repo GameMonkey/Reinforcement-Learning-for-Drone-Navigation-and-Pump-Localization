@@ -20,7 +20,7 @@ import time
 from model_interface import QueueLengthController
 from bridges import init_rclpy, shutdown_rclpy
 from environment import generate_environment
-from utils import turn_drone, shield_action, build_uppaal_2d_array_string, run_pump_detection, check_map_closed, measure_coverage
+from utils import turn_drone, shield_action, build_uppaal_2d_array_string, run_pump_detection, check_map_closed, measure_coverage, store_shielded_state
 from classes import State, DroneSpecs, TrainingParameters
 from maps import get_baseline_one_pump_config, get_baseline_two_pumps_config, get_baseline_big_room_config, get_baseline_tetris_room_config,get_baseline_cylinder_room_config
 
@@ -96,6 +96,7 @@ def activate_action_with_shield(action):
         state = activate_action(action)
     else:
         print("shielded action: {}".format(action))
+        store_shielded_state
         run_action_seq([4,4,4,4])
         state = get_current_state()
         if(shield_action(action,state,drone_specs)):
