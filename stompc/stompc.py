@@ -96,7 +96,7 @@ def activate_action_with_shield(action):
         state = activate_action(action)
     else:
         print("shielded action: {}".format(action))
-        store_shielded_state
+        store_shielded_state(state, action)
         run_action_seq([4,4,4,4])
         state = get_current_state()
         if(shield_action(action,state,drone_specs)):
