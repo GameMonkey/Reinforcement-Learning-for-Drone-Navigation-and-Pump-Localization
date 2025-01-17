@@ -8,6 +8,7 @@ import strategoutil as sutil
 import time
 import math
 import csv
+import datetime
 from multiprocessing import Process, Queue, Pipe
 from bfs import get_path_from_bfs
 sys.path.insert(0, '../')
@@ -27,6 +28,7 @@ from maps import get_baseline_one_pump_config, get_baseline_two_pumps_config, ge
 global offboard_control_instance
 global odom_publisher_instance
 global map_drone_tf_listener_instance
+global res_folder
 
 ENV_DOMAIN = os.environ['DOMAIN']
 ENV_VERIFYTA_PATH = os.environ['VERIFYTA_PATH']
@@ -48,12 +50,14 @@ e_move = 0.1
 uppaa_e = 0.5
 
 drone_specs = DroneSpecs(drone_diameter=0.6,safety_range=0.4,laser_range=4,laser_range_diameter=3)
-training_parameters = TrainingParameters(open=1, turning_cost=20.0, moving_cost=20.0, discovery_reward=10.0, pump_exploration_reward=1000.0)
+training_parameters = TrainingParameters(open=1, turning_cost=200.0, moving_cost=10.0, discovery_reward=1.0, pump_exploration_reward=10000000.0)
 learning_args = {
     "max-iterations": "3",
     #"reset-no-better": "5",
     "good-runs": "50",
-    "total-runs": "300",
+    "total-runs": "300"
+    #"eval-runs": 300,
+    #"runs-pr-state": 300,
     #"runs-pr-state": "100"
     }
 
@@ -243,6 +247,8 @@ def run(template_file, query_file, verifyta_path):
 
         if train == True or k % horizon == 0:
             N = N + 1
+            print("Started sleeping for 10 sec")
+            time.sleep(10)
             print("Beginning trainng for iteration {}".format(N))
 
             controller.init_simfile()
@@ -298,6 +304,7 @@ def run(template_file, query_file, verifyta_path):
                     if(train == True):
                         state = get_current_state()
                         continue"""
+                controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
                 action_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
             else:
                 action_seq = get_path_from_bfs(state, drone_specs, map_config)
@@ -343,9 +350,9 @@ def main():
     global RUN_START
     RUN_START = time.time()
     init_rclpy(ENV_DOMAIN)
-    run_gz(GZ_PATH=ENV_GZ_PATH)
+    # run_gz(GZ_PATH=ENV_GZ_PATH)
     time.sleep(10)
-    run_xrce_agent()
+    # run_xrce_agent()
     time.sleep(3)
 
     offboard_control_instance = offboard_control.OffboardControl()
@@ -372,7 +379,7 @@ def main():
         time.sleep(0.1)
 
     run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)   
-    time.sleep(5)
+    time.sleep(30)
     pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, query_file, args.verifyta_path)
     print("Run finished. Turning off drone and getting ready for reset")
     offboard_control_instance.shutdown_drone = True
@@ -393,6 +400,11 @@ if __name__ == "__main__":
     file_name = f'experiments/nobug_Experiment_open=1_turningcost=20_movingcost=20_discoveryreward=10_pumpreward=1000_safetyrange=40cm_maxiter=3_rnb=default_gr={learning_args["good-runs"]}_tr={learning_args["total-runs"]}_rps=default_h=20.csv'
     #create_csv(file_name)
 
+    global res_folder 
+    print("Creating results folder")
+    res_folder = "./results/"  + datetime.datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+    os.makedirs(res_folder)
+    
     res, takeoff = main()
     print("\nResults for run:\n   Found all pumps: {}\n   Map closed: {}\n   Total coverage of room: {}\n   Total time taken (in minutes): {}\n   Number of times trained: {}\n   Average training time: {}\n   Number of actions activated: {}\n   Possible crash: {}\n   Takeoff: {}\n".format(res[0],res[1],res[2],res[3],res[4],res[5], res[6], res[7], takeoff))
     if takeoff:
