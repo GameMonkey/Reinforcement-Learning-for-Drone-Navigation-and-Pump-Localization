@@ -104,7 +104,3 @@ def process_map_data(drone_x: float, drone_y: float, map_config: MapConfig) -> S
             y = 0
             
     return state
-
-
-
-

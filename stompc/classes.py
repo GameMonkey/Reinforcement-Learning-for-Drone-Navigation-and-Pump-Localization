@@ -1,15 +1,16 @@
-class State: 
-    yaw = 0.0
-    def __init__(self, map:list, map_drone_index_x:int,map_drone_index_y:int, map_width:int, map_height:int, map_granularity:float, map_odom_index_x:int, map_odom_index_y: int):
-        self.map = map
-        self.map_drone_index_x = map_drone_index_x
-        self.map_drone_index_y = map_drone_index_y
-        self.map_odom_index_x = map_odom_index_x
-        self.map_odom_index_y = map_odom_index_y
-        self.map_width = map_width
-        self.map_height = map_height
-        self.map_granularity = map_granularity
+from dataclasses import dataclass
 
+@dataclass
+class State: 
+    yaw: float = 0.0
+    map: list
+    map_drone_index_x: int
+    map_drone_index_y:int
+    map_width:int
+    map_height:int
+    map_granularity:float
+    map_odom_index_x:int
+    map_odom_index_y: int
 
 
 class DroneSpecs:

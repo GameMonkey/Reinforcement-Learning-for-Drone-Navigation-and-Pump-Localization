@@ -1,6 +1,8 @@
 import math
 from classes import State, DroneSpecs, MapConfig, Pump
 from collections import Counter
+from dataclasses import asdict
+import json
 
 PI_upper = 3.14
 PI_lower = -3.14
@@ -23,6 +25,37 @@ DIRS = {4: f"Turn {PI_half_neg}",
         22: "1 in positive y",
         23: "1 in negative x",}
 
+def store_shielded_state(state: State, action: int) -> None:
+    x_offset = state.map_odom_index_x
+    y_offset = state.map_odom_index_y
+
+    x_index = state.map_drone_index_x
+    y_index = state.map_drone_index_y
+
+    readable_map = []
+    for x, row in enumerate(state.map):
+        string_row = []
+        for y,a in enumerate(row):
+            y=y+1
+            if x == y_offset and y == x_offset:
+                string_row.append("M")
+            if x == y_index and y == x_index:
+                string_row.append("*")
+            elif a == -1:
+                string_row.append("?")
+            elif a == 0:
+                string_row.append("+")
+            elif a == 100:
+                string_row.append("-")
+            elif a == 2:
+                string_row.append("!")
+        readable_map.append(''.join(string_row))
+    state.map = readable_map
+    data = [{"Action:": action},asdict(state)]
+
+    with open("shielded_action_insert_num.json", 'w') as f:
+        json.dump(data, f)
+
 def turn_drone(yaw, yaw_dx):
     if yaw >= PI_upper and yaw_dx > 0: 
         yaw = PI_lower + yaw_dx
@@ -38,9 +71,6 @@ def turn_drone(yaw, yaw_dx):
         
     return yaw
 
-def store_shielded_state(state: State) -> None:
-    
-    return None
 
 def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
     """
