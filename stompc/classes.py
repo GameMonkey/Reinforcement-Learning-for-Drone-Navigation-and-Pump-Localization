@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 @dataclass
 class State: 
-    yaw: float = 0.0
     map: list
     map_drone_index_x: int
     map_drone_index_y:int
@@ -11,6 +10,7 @@ class State:
     map_granularity:float
     map_odom_index_x:int
     map_odom_index_y: int
+    yaw: float = 0.0
 
 
 class DroneSpecs:
