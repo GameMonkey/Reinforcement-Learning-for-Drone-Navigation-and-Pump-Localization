@@ -25,7 +25,7 @@ DIRS = {4: f"Turn {PI_half_neg}",
         22: "1 in positive y",
         23: "1 in negative x",}
 
-def store_shielded_state(state: State, action: int) -> None:
+def store_shielded_state(state: State, action: int, step_num: int, iteration: int, action_seq: list) -> str:
     x_offset = state.map_odom_index_x
     y_offset = state.map_odom_index_y
 
@@ -50,11 +50,19 @@ def store_shielded_state(state: State, action: int) -> None:
             elif a == 2:
                 string_row.append("!")
         readable_map.append(''.join(string_row))
-    state.map = readable_map
-    data = [{"Action:": action},asdict(state)]
 
-    with open("shielded_action_insert_num.json", 'w') as f:
+    state.map = readable_map
+    data = [{"Action:": DIRS[action],
+             "Step Number": step_num,
+             "Training Iteration": iteration,
+             "Action Sequence": action_seq},
+            asdict(state)]
+
+    shield_file_location = f"Shielded_action-{action}_iteration-{iteration}_stepNumber-{step_num}.json"
+    with open(shield_file_location, 'w') as f:
         json.dump(data, f)
+    
+    return shield_file_location
 
 def turn_drone(yaw, yaw_dx):
     if yaw >= PI_upper and yaw_dx > 0: 

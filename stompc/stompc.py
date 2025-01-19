@@ -90,7 +90,7 @@ def run_action_seq(actions:list):
     return True
 
 
-def activate_action_with_shield(action):
+def activate_action_with_shield(action, step_num, iteration, action_seq):
     """
     Returns TRUE if action is activated
     Returns FALSE if action is not activated / is not safe.
@@ -100,7 +100,7 @@ def activate_action_with_shield(action):
         state = activate_action(action)
     else:
         print("shielded action: {}".format(action))
-        store_shielded_state(state, action)
+        shield_file_location = store_shielded_state(state, action, step_num, iteration, action_seq)
         run_action_seq([4,4,4,4])
         state = get_current_state()
         if(shield_action(action,state,drone_specs)):
@@ -239,6 +239,7 @@ def run(template_file, query_file, verifyta_path):
     learning_time_accum = 0
 
     use_baseline = False
+    copy_action_seq = None
 
     run_action_seq([4,4,4,4])
 
@@ -309,7 +310,8 @@ def run(template_file, query_file, verifyta_path):
             else:
                 action_seq = get_path_from_bfs(state, drone_specs, map_config)
             
-        
+            copy_action_seq = [x for x in action_seq]
+            
             k = 0
             UPPAAL_END_TIME = time.time()
             K_END_TIME = time.time()
@@ -326,7 +328,7 @@ def run(template_file, query_file, verifyta_path):
             k = 0
         else: 
             action = action_seq.pop(0)
-            action_was_activated = activate_action_with_shield(action)
+            action_was_activated = activate_action_with_shield(action, k, N, copy_action_seq)
             state = get_current_state()
 
             if action_was_activated == False:
