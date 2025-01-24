@@ -3,27 +3,29 @@ from classes import State, DroneSpecs, MapConfig, Pump
 from collections import Counter
 from dataclasses import asdict
 import json
+import rclpy
+from ros2node.api import get_node_names
 
 PI_upper = 3.14
 PI_lower = -3.14
 PI_half_pos = 1.57
 PI_half_neg = -1.57
 
-DIRS = {4: f"Turn {PI_half_neg}",
-        5: f"Turn {PI_half_pos}",
-        6: f"Turn {PI_upper}",
-        10: "0.5 in negative y",
-        11: "0.5 in positive x",
-        12: "0.5 in positive y",
-        13: "0.5 in negative x",
-        10: "0.5 in negative y",
-        11: "0.5 in positive x",
-        12: "0.5 in positive y",
-        13: "0.5 in negative x",
-        20: "1 in negative y",
-        21: "1 in positive x",
-        22: "1 in positive y",
-        23: "1 in negative x",}
+action_names = {4: f"Turn {PI_half_neg}",
+                5: f"Turn {PI_half_pos}",
+                6: f"Turn {PI_upper}",
+                10: "0.5 in negative y",
+                11: "0.5 in positive x",
+                12: "0.5 in positive y",
+                13: "0.5 in negative x",
+                10: "0.5 in negative y",
+                11: "0.5 in positive x",
+                12: "0.5 in positive y",
+                13: "0.5 in negative x",
+                20: "1 in negative y",
+                21: "1 in positive x",
+                22: "1 in positive y",
+                23: "1 in negative x", }
 
 def store_shielded_state(state: State, action: int, step_num: int, iteration: int, action_seq: list) -> str:
     x_offset = state.map_odom_index_x
@@ -50,19 +52,31 @@ def store_shielded_state(state: State, action: int, step_num: int, iteration: in
             elif a == 2:
                 string_row.append("!")
         readable_map.append(''.join(string_row))
+    with open("map.txt", "w") as f:
+        f.write("\n".join(readable_map))
 
     state.map = readable_map
-    data = [{"Action:": DIRS[action],
+    data = [{"Action:": action_names[action],
              "Step Number": step_num,
              "Training Iteration": iteration,
              "Action Sequence": action_seq},
             asdict(state)]
 
-    shield_file_location = f"Shielded_action-{action}_iteration-{iteration}_stepNumber-{step_num}.json"
+    shield_file_location = f"Shielding_iteration-{iteration}_stepNumber-{step_num}_action-{action}.json"
     with open(shield_file_location, 'w') as f:
         json.dump(data, f)
     
     return shield_file_location
+
+
+def kill_nodes():
+    node = rclpy.create_node("list_nodes_example")
+    available_nodes = get_node_names(node=node, include_hidden_nodes=True)
+    for name, namespace, full_name in available_nodes:
+        print(f"Found node {name} in namespace {namespace} (full name: {full_name}")
+    node.destroy_node()
+
+
 
 def turn_drone(yaw, yaw_dx):
     if yaw >= PI_upper and yaw_dx > 0: 

@@ -4,9 +4,12 @@ build/
 pumpdetection_model/outputs/model.pt
 .pt
 .env
-
+.idea/*
 
 
 # Project specific files
 stompc/matrix.txt
-stompc/drone_model_stompc_continous_sim.xml
+stompc/drone_model_stompc_continuous_sim.xml
+stompc/query.q
+stompc/experiments/*
+stompc/results/*
