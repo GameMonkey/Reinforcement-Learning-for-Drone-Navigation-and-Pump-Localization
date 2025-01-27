@@ -105,9 +105,9 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
         step_length = 1.0
     else:
         step_length = 0.5
-    N_cells_in_dir = int(step_length / state.map_granularity)
-    drone_cells_to_cover = int((drone_specs.drone_diameter) / state.map_granularity)
-    safety_range_cells = int(drone_specs.safety_range / state.map_granularity)
+    N_cells_in_dir = int(step_length // state.map_granularity)
+    drone_cells_to_cover = int((drone_specs.drone_diameter) // state.map_granularity)
+    safety_range_cells = int(drone_specs.safety_range // state.map_granularity)
     
     if drone_cells_to_cover % 2 == 0:
         drone_cells_to_cover += 1
@@ -115,8 +115,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
     
     match action:
         case 10 | 20:
-            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover // 2) + safety_range_cells)
             upper_bound_y = int(state.map_drone_index_y + N_cells_in_dir + safety_range_cells)
 
 
@@ -132,8 +132,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
             
             return True
         case 11 | 21:
-            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover // 2) + safety_range_cells)
             upper_bound_x = int(state.map_drone_index_x + N_cells_in_dir + safety_range_cells)
 
 
@@ -147,8 +147,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
                     
             return True
         case 12 | 22:
-            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover // 2) + safety_range_cells)
             lower_bound_y = int(state.map_drone_index_y - N_cells_in_dir - safety_range_cells)
 
           
@@ -164,8 +164,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
                     
             return True
         case 13 | 23:
-            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover // 2) + safety_range_cells)
             lower_bound_x = int(state.map_drone_index_x - N_cells_in_dir - safety_range_cells)
 
           
