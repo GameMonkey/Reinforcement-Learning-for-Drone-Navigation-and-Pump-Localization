@@ -21,6 +21,7 @@ load_dotenv()
 from gz_utils import run_gz, run_xrce_agent, run_launch_file
 from ROS import vehicle_odometry, offboard_control, camera_control, lidar_sensor, odom_publisher, map_processing
 import time
+import psutil
 from model_interface import QueueLengthController
 from bridges import init_rclpy, shutdown_rclpy
 from environment import generate_environment
@@ -75,8 +76,8 @@ map_config = get_baseline_one_pump_config()
 def write_to_csv(filename, res):
     with open(filename, 'a+') as csv_file:
         writer = csv.writer(csv_file)
-        csv_file.write("Results for run,Found all pumps,Map closed,Total coverage of room,Total time taken (in minutes),"
-                       "Number of times trained,Average training time,Number of actions activated,Possible crash")
+        csv_file.write("Found all pumps,Map closed,Total coverage of room,Total time taken (in minutes),"
+                       "Number of times trained,Average training time,Number of actions activated,Possible crash\n")
         writer.writerow(res)
 
 def get_current_state():
@@ -126,6 +127,8 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
         actions_taken.append(action_names[4])
         actions_taken.append(action_names[4])
         actions_taken.append(action_names[4])
+        print("Sleeping 2 seconds to give time for the map to update")
+        time.sleep(5)
 
         state = get_current_state()
         if(shield_action(action,state,drone_specs)):
@@ -260,8 +263,10 @@ def run(template_file, query_file, verifyta_path):
     state = map_processing.process_map_data(x,y, map_config)
     state.yaw = offboard_control_instance.yaw
     controller.generate_query_file(optimize, learning_param,
-                                   state_vars=["DroneController.DescisionState"], 
-                                   point_vars=["yaw", "x", "y"], 
+                                   #state_vars=["DroneController.DescisionState"],
+                                   state_vars=["DroneController.DescisionState", "yaw", "x", "y"],
+                                   point_vars=["time"],
+                                   #point_vars=["yaw", "x", "y"],
                                    observables=["action"])
 
 
@@ -273,16 +278,53 @@ def run(template_file, query_file, verifyta_path):
 
     use_baseline = False
     copy_action_seq = None
+# offboard_thread = threading.Thread(target=rclpy.spin, args=(offboard_control_instance,), daemon=True)
+    run_drone_thread = threading.Thread(target=run_action_seq, args=([4, 4, 4, 4], 0, 0, 0), daemon=True)
+    run_drone_thread.start()
 
-    run_action_seq([4,4,4,4], 0, 0, 0)
-    #while N <= 0:
+    print("Sending commands to drone.")
+    drone_start_time = time.time()
+    while run_drone_thread.is_alive():
+        # Giving 2 minuttes for the drone to turn
+        if time.time() - drone_start_time >= 60 * 2:
+            print("Drone is non-responsive", file=sys.stderr)
+            print("Killing Child Processes", file=sys.stderr)
+            pid = os.getpid()
+            process = psutil.Process(pid)
+
+            for c in process.children(recursive=True):
+                c.kill()
+
+            gz_p = None
+            try:
+                for p in psutil.process_iter(['cmdline']):
+                    if p.info['cmdline'] and 'gz sim' in ' '.join(p.info['cmdline']):
+                        gz_p = p
+                if gz_p != None:
+                    gz_p.send_signal(signal.SIGKILL)
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                print('No process with gz :thinking:')
+                pass
+
+            raise Exception("The drone is not responsive")
+        time.sleep(0.1)
+
+    run_drone_thread.join()
+    print("Drone responds to commands")
+    # run_action_seq([4,4,4,4], 0, 0, 0)
+    # Initial wait to ensure that the map is updated!
+    print("Started sleeping for 5 sec")
+    time.sleep(5)
+
+
+    #while N <= 2:
     while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and check_map_closed(state, ALLOWED_GAP_IN_MAP)) and CURR_TIME_SPENT < TIME_PER_RUN:
         K_START_TIME = time.time()
 
         if train == True or k % horizon == 0:
             N = N + 1
-            print("Started sleeping for 10 sec")
-            time.sleep(10)
+            print("Started sleeping for 5 sec")
+            time.sleep(5)
             print("Beginning trainng for iteration {}".format(N))
 
             controller.init_simfile()
@@ -400,10 +442,10 @@ def main():
     time.sleep(3)
 
     print("Manually starting onboarding controller")
-    # executor_controller = rclpy.executors.MultiThreadedExecutor()
+    executor_controller = rclpy.executors.SingleThreadedExecutor()
     offboard_control_instance = offboard_control.OffboardControl()
-    # executor_controller.add_node(offboard_control_instance)
-    offboard_thread = threading.Thread(target=rclpy.spin, args=(offboard_control_instance,), daemon=True)
+    executor_controller.add_node(offboard_control_instance)
+    offboard_thread = threading.Thread(target=executor_controller.spin, daemon=True)
     offboard_thread.start()
     time.sleep(5)
     print("Done onboarding controller")
@@ -415,6 +457,7 @@ def main():
     executor_odom.add_node(odom_publisher_instance)
     odom_thread = threading.Thread(target=executor_odom.spin, daemon=True)
     odom_thread.start()
+    print("Odom pid:", odom_thread.native_id)
     time.sleep(5)
     print("Done with Odometry")
 
@@ -426,6 +469,7 @@ def main():
     executor_frame.add_node(map_drone_tf_listener_instance)
     frame_thread = threading.Thread(target=executor_frame.spin, daemon=True)
     frame_thread.start()
+    print("Frame pid:", frame_thread.native_id)
     time.sleep(2)
     print("Done with Map Framer")
 
@@ -443,11 +487,46 @@ def main():
     base_path = os.path.dirname(os.path.realpath(__file__)) 
     template_file = os.path.join(base_path, args.template_file)
     query_file = os.path.join(base_path, args.query_file)
-    
+
+    drone_start_time = time.time()
     while offboard_control_instance.has_aired == False:
-        #print(offboard_control_instance.vehicle_local_position.z)
+        # Giving 2 minuttes for the drone to lift off
+        if time.time() - drone_start_time >= 60 * 2:
+            print("No lift-off of drone", file=sys.stderr)
+            print("Killing Child Processes", file=sys.stderr)
+
+            offboard_control_instance.destroy_node()
+            odom_publisher_instance.destroy_node()
+            map_drone_tf_listener_instance.destroy_node()
+
+            executor_controller.shutdown()
+            executor_odom.shutdown()
+            executor_frame.shutdown()
+
+            rclpy.shutdown()
+
+            pid = os.getpid()
+            process = psutil.Process(pid)
+
+            for c in process.children(recursive=True):
+                c.kill()
+
+            gz_p = None
+            try:
+                for p in psutil.process_iter(['cmdline']):
+                    if p.info['cmdline'] and 'gz sim' in ' '.join(p.info['cmdline']):
+                        gz_p = p
+                if gz_p != None:
+                    gz_p.send_signal(signal.SIGKILL)
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                print('No process with gz :thinking:')
+                pass
+
+            raise Exception("The drone is stuck in liftoff")
+
         time.sleep(0.1)
 
+    print("Successful lift-off of drone")
 
     print("Starting launch")
     run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)
@@ -512,7 +591,7 @@ def main():
 
 
     #print("Shutdown 1")
-    # executor_controller.shutdown()
+    executor_controller.shutdown()
 
     #print("Shutdown 2")
     executor_odom.shutdown()
@@ -546,7 +625,7 @@ def main():
     # launch_thread.join()
 
 
-    Popen("./killall.sh", shell=True).wait()
+    # Popen("./killall.sh", shell=True).wait()
 
     return [pumps_found, map_closed, room_covered, CURR_TIME_SPENT / 60, N, learning_time_accum, num_of_actions, True if room_covered > 105 else False], False if room_covered < 10 else True
 
@@ -558,6 +637,13 @@ def create_csv(filename):
     with open(filename, 'w+') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
         writer.writerow(fields)
+
+def kill_process_and_children(p):
+    for child in process.children(recursive=True):  # or parent.children() for recursive=False
+        print("Lower Level Child Process: {}".format(child.pid))
+        kill_process_and_children(child)
+        child.kill()
+    p.kill()
 
 if __name__ == "__main__":
     #file_name = f'Experiment_open={1}_turningcost={20}_movingcost={20}_discoveryreward={10}_pumpreward={1000}_safetyrange={40}cm_maxiter={learning_args["max-iterations"]}_rnb={learning_args["reset-no-better"]}_gr={learning_args["good-runs"]}_tr={learning_args["total-runs"]}_rps={learning_args["runs-pr-state"]}.csv'
@@ -580,6 +666,27 @@ if __name__ == "__main__":
     with open( "./" + res_folder + "/actions_taken.csv", "w") as f:
         f.write("\n".join(actions_taken))
 
+
+    pid = os.getpid()
+    print("Main Process: {}".format(pid))
+    process = psutil.Process(pid)
+
+    Popen("./killall.sh", shell=True).wait()
+
+    for c in process.children(recursive=True):  # or parent.children() for recursive=False
+        print("Child Process: {}".format(c.pid))
+        c.kill()
+
+    gz_p = None
+    try:
+        for p in psutil.process_iter(['cmdline']):
+            if p.info['cmdline'] and 'gz sim' in ' '.join(p.info['cmdline']):
+                gz_p = p
+        if gz_p != None:
+            gz_p.send_signal(signal.SIGKILL)
+    except (psutil.AccessDenied, psutil.NoSuchProcess):
+        print('No process with gz :thinking:')
+        pass
 
 
     print("Done!")
