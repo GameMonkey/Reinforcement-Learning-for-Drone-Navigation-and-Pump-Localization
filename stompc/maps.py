@@ -31,7 +31,7 @@ def get_baseline_big_room_config():
     pump3 = Pump(11.5, 0)
     fake_pump = Pump(5.5,14)
     
-    config = MapConfig(pumps=[pump, pump2, pump3], fake_pumps=[fake_pump], n_cells_in_area=24480)
+    config = MapConfig(pumps=[pump, pump2, pump3], fake_pumps=[fake_pump], n_cells_in_area=144400)
     return config
 
 
@@ -39,7 +39,7 @@ def get_baseline_tetris_room_config():
     pump = Pump(4,-4)
     fake_pump = Pump(0,-7)
 
-    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=144400)
+    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=26928)
     return config
 
 

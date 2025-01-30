@@ -1,11 +1,78 @@
 import math
 from classes import State, DroneSpecs, MapConfig, Pump
 from collections import Counter
+from dataclasses import asdict
+import json
+import rclpy
+from ros2node.api import get_node_names
 
 PI_upper = 3.14
 PI_lower = -3.14
 PI_half_pos = 1.57
 PI_half_neg = -1.57
+
+action_names = {4: f"Turn {PI_half_neg}",
+                5: f"Turn {PI_half_pos}",
+                6: f"Turn {PI_upper}",
+                10: "0.5 in negative y",
+                11: "0.5 in positive x",
+                12: "0.5 in positive y",
+                13: "0.5 in negative x",
+                20: "1 in negative y",
+                21: "1 in positive x",
+                22: "1 in positive y",
+                23: "1 in negative x", }
+
+def store_shielded_state(state: State, action: int, step_num: int, iteration: int, action_seq: list) -> str:
+    x_offset = state.map_odom_index_x
+    y_offset = state.map_odom_index_y
+
+    x_index = state.map_drone_index_x
+    y_index = state.map_drone_index_y
+
+    readable_map = []
+    for x, row in enumerate(state.map):
+        string_row = []
+        for y,a in enumerate(row):
+            y=y+1
+            if x == y_offset and y == x_offset:
+                string_row.append("M")
+            if x == y_index and y == x_index:
+                string_row.append("*")
+            elif a == -1:
+                string_row.append("?")
+            elif a == 0:
+                string_row.append("+")
+            elif a == 100:
+                string_row.append("-")
+            elif a == 2:
+                string_row.append("!")
+        readable_map.append(''.join(string_row))
+    with open("map.txt", "w") as f:
+        f.write("\n".join(readable_map))
+
+    state.map = readable_map
+    data = [{"Action:": action_names[action],
+             "Step Number": step_num,
+             "Training Iteration": iteration,
+             "Action Sequence": action_seq},
+            asdict(state)]
+
+    shield_file_location = f"Shielding_iteration-{iteration}_stepNumber-{step_num}_action-{action}.json"
+    with open(shield_file_location, 'w') as f:
+        json.dump(data, f)
+    
+    return shield_file_location
+
+
+def kill_nodes():
+    node = rclpy.create_node("list_nodes_example")
+    available_nodes = get_node_names(node=node, include_hidden_nodes=True)
+    for name, namespace, full_name in available_nodes:
+        print(f"Found node {name} in namespace {namespace} (full name: {full_name}")
+    node.destroy_node()
+
+
 
 def turn_drone(yaw, yaw_dx):
     if yaw >= PI_upper and yaw_dx > 0: 
@@ -23,7 +90,6 @@ def turn_drone(yaw, yaw_dx):
     return yaw
 
 
-
 def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
     """
     Returns TRUE if action is SAFE.
@@ -35,9 +101,9 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
         step_length = 1.0
     else:
         step_length = 0.5
-    N_cells_in_dir = int(step_length / state.map_granularity)
-    drone_cells_to_cover = int((drone_specs.drone_diameter) / state.map_granularity)
-    safety_range_cells = int(drone_specs.safety_range / state.map_granularity)
+    N_cells_in_dir = int(step_length // state.map_granularity)
+    drone_cells_to_cover = int((drone_specs.drone_diameter) // state.map_granularity)
+    safety_range_cells = int(drone_specs.safety_range // state.map_granularity)
     
     if drone_cells_to_cover % 2 == 0:
         drone_cells_to_cover += 1
@@ -45,8 +111,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
     
     match action:
         case 10 | 20:
-            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover // 2) + safety_range_cells)
             upper_bound_y = int(state.map_drone_index_y + N_cells_in_dir + safety_range_cells)
 
 
@@ -62,8 +128,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
             
             return True
         case 11 | 21:
-            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover // 2) + safety_range_cells)
             upper_bound_x = int(state.map_drone_index_x + N_cells_in_dir + safety_range_cells)
 
 
@@ -77,8 +143,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
                     
             return True
         case 12 | 22:
-            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_x = int(state.map_drone_index_x - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_x = int(state.map_drone_index_x +  (drone_cells_to_cover // 2) + safety_range_cells)
             lower_bound_y = int(state.map_drone_index_y - N_cells_in_dir - safety_range_cells)
 
           
@@ -94,8 +160,8 @@ def shield_action(action: int, state:State, drone_specs: DroneSpecs) -> bool:
                     
             return True
         case 13 | 23:
-            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover / 2) - safety_range_cells)
-            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover / 2) + safety_range_cells)
+            lower_bound_y = int(state.map_drone_index_y - (drone_cells_to_cover // 2) - safety_range_cells)
+            upper_bound_y = int(state.map_drone_index_y +  (drone_cells_to_cover // 2) + safety_range_cells)
             lower_bound_x = int(state.map_drone_index_x - N_cells_in_dir - safety_range_cells)
 
           
@@ -236,7 +302,7 @@ def check_if_drone_can_see_pump(state:State, pump: Pump, drone_specs: DroneSpecs
     if x_index > state.map_width or y_index > state.map_height:
         return False
     
-    n_foward_cells_to_search = int(0.75 / state.map_granularity) #TODO change to interval like in UPPAAL, 0.75 should be a TAG
+    n_foward_cells_to_search = int(drone_specs.upper_pump_detection_range / state.map_granularity) #TODO change to interval like in UPPAAL, 0.75 should be a TAG
     n_diamter_cells_to_search = int(drone_specs.laser_range_diameter / state.map_granularity)
 
     if(n_foward_cells_to_search % 2 == 0):

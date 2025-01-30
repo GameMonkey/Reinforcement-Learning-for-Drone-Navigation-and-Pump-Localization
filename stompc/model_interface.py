@@ -22,11 +22,14 @@ class QueueLengthController(StrategoController):
             
     def generate_query_file(self, optimize, learning_param, state_vars, point_vars, observables):
         strategy = self.generate_strategy_query(optimize, learning_param, state_vars, point_vars)
+        save_strategy = self.generate_store_strategy_query()
         simulate = self.generate_simulate_query(observables)
         f = open("query.q", "w")
-        f.write(strategy +"\n \n" + simulate)
+        f.write(strategy +"\n \n" + save_strategy + "\n \n" + simulate)
         f.close()
 
+    def generate_store_strategy_query(self):
+        return 'saveStrategy("./strategy.json", opt)'
 
     def generate_strategy_query(self,optimize, learning_param, state_vars, point_vars):
 

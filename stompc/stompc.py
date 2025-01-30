@@ -8,25 +8,35 @@ import strategoutil as sutil
 import time
 import math
 import csv
+import datetime
+import signal
+from subprocess import Popen, PIPE
 from multiprocessing import Process, Queue, Pipe
 from bfs import get_path_from_bfs
 sys.path.insert(0, '../')
 from dotenv import load_dotenv
 load_dotenv()
 
+
 from gz_utils import run_gz, run_xrce_agent, run_launch_file
 from ROS import vehicle_odometry, offboard_control, camera_control, lidar_sensor, odom_publisher, map_processing
 import time
+import psutil
 from model_interface import QueueLengthController
 from bridges import init_rclpy, shutdown_rclpy
 from environment import generate_environment
-from utils import turn_drone, shield_action, build_uppaal_2d_array_string, run_pump_detection, check_map_closed, measure_coverage
+from utils import turn_drone, shield_action, build_uppaal_2d_array_string, run_pump_detection, check_map_closed, measure_coverage, store_shielded_state
+from utils import action_names, kill_nodes
 from classes import State, DroneSpecs, TrainingParameters
 from maps import get_baseline_one_pump_config, get_baseline_two_pumps_config, get_baseline_big_room_config, get_baseline_tetris_room_config,get_baseline_cylinder_room_config
+
 
 global offboard_control_instance
 global odom_publisher_instance
 global map_drone_tf_listener_instance
+global res_folder
+global actions_taken
+actions_taken = []
 
 ENV_DOMAIN = os.environ['DOMAIN']
 ENV_VERIFYTA_PATH = os.environ['VERIFYTA_PATH']
@@ -47,23 +57,27 @@ e_turn = 0.05
 e_move = 0.1
 uppaa_e = 0.5
 
-drone_specs = DroneSpecs(drone_diameter=0.6,safety_range=0.4,laser_range=4,laser_range_diameter=3)
-training_parameters = TrainingParameters(open=1, turning_cost=20.0, moving_cost=20.0, discovery_reward=10.0, pump_exploration_reward=1000.0)
+drone_specs = DroneSpecs(drone_diameter=0.6,safety_range=0.4,laser_range=4,laser_range_diameter=3, upper_pump_detection_range=1.25)
+training_parameters = TrainingParameters(open=1, turning_cost=200.0, moving_cost=10.0, discovery_reward=1.0, pump_exploration_reward=10000000.0)
 learning_args = {
     "max-iterations": "3",
     #"reset-no-better": "5",
     "good-runs": "50",
-    "total-runs": "300",
+    "total-runs": "300"
+    #"eval-runs": 300,
+    #"runs-pr-state": 300,
     #"runs-pr-state": "100"
     }
 
 global map_config
-map_config = get_baseline_one_pump_config()
+map_config = get_baseline_cylinder_room_config()
 
 
 def write_to_csv(filename, res):
     with open(filename, 'a+') as csv_file:
         writer = csv.writer(csv_file)
+        csv_file.write("Found all pumps,Map closed,Total coverage of room,Total time taken (in minutes),"
+                       "Number of times trained,Average training time,Number of actions activated,Possible crash\n")
         writer.writerow(res)
 
 def get_current_state():
@@ -73,35 +87,62 @@ def get_current_state():
     state = map_processing.process_map_data(x,y, map_config)
     state.yaw = yaw
     return state
- 
-def run_action_seq(actions:list):
+
+def run_action_seq(actions:list, step_num, iteration, action_seq):
     """
     Returns TRUE if all actions was successfully executed
     Returns FALSE if all actions was not successfully executed.
     """
-    while(len(actions) > 0):
-        action_was_activated = activate_action_with_shield(actions.pop(0))
-        if(action_was_activated == False):
+    print("Action sequence by names:")
+    print([action_names[a] for a in actions])
+
+    while len(actions) > 0:
+        action_was_activated = activate_action_with_shield(actions.pop(0), step_num, iteration, action_seq)
+        if not action_was_activated:
             return False
     return True
 
 
-def activate_action_with_shield(action):
+def activate_action_with_shield(action, step_num, iteration, action_seq):
     """
     Returns TRUE if action is activated
     Returns FALSE if action is not activated / is not safe.
     """
+    global actions_taken
+
     state = get_current_state()
     if(shield_action(action,state, drone_specs)):
         state = activate_action(action)
+        actions_taken.append(action_names[action])
     else:
         print("shielded action: {}".format(action))
-        run_action_seq([4,4,4,4])
+        print("shielded action: {}".format(action_names[action]))
+        shield_file_location = store_shielded_state(state, action, step_num, iteration, action_seq)
+        global res_folder
+        os.rename("./" + shield_file_location, "./" +  res_folder + "/" + shield_file_location)
+        os.rename("./map.txt", "./" + res_folder + "/" + "./map_iteration-{}_stepNum-{}_action-{}.txt".format(iteration, step_num, action))
+
+        run_action_seq([4,4,4,4], 0, 0, 0)
+        actions_taken.append(action_names[4])
+        actions_taken.append(action_names[4])
+        actions_taken.append(action_names[4])
+        actions_taken.append(action_names[4])
+        print("Sleeping 2 seconds to give time for the map to update")
+        time.sleep(5)
+
         state = get_current_state()
         if(shield_action(action,state,drone_specs)):
             activate_action(action)
         else:
             print("shielded action: {} twice, training again".format(action))
+            print("shielded action: {}".format(action_names[action]))
+            shield_file_location = store_shielded_state(state, action, step_num, iteration, action_seq)
+            shield_file_location = shield_file_location.split(".")
+            os.rename("./" + shield_file_location[0] + "." + shield_file_location[1],
+                      "./" + res_folder + "/" + shield_file_location[0] + "_second_shielding." + shield_file_location[1])
+            os.rename("./map.txt",
+                      "./" + res_folder + "/" + "./map_iteration-{}_stepNum-{}_action-{}_twice.txt".format(iteration,
+                                                                                                           step_num, action))
             return False
     
     return True
@@ -210,7 +251,7 @@ def run(template_file, query_file, verifyta_path):
     print("running uppaal")
     controller = QueueLengthController(
         templatefile=template_file,
-        state_names=["x", "y", "yaw", "width_map","height_map", "map", "granularity_map", "open", "discovery_reward", "turning_cost", "moving_cost", "drone_diameter", "safety_range", "range_laser", "laser_range_diameter", "pump_exploration_reward"])
+        state_names=["x", "y", "yaw", "width_map","height_map", "map", "granularity_map", "open", "discovery_reward", "turning_cost", "moving_cost", "drone_diameter", "safety_range", "range_laser", "laser_range_diameter", "pump_exploration_reward", "upper_pump_detection_range"])
     # initial drone state
     x = float(vehicle_odometry.get_drone_pos_x())
     y = float(vehicle_odometry.get_drone_pos_y())
@@ -222,8 +263,10 @@ def run(template_file, query_file, verifyta_path):
     state = map_processing.process_map_data(x,y, map_config)
     state.yaw = offboard_control_instance.yaw
     controller.generate_query_file(optimize, learning_param,
-                                   state_vars=["DroneController.DescisionState"], 
-                                   point_vars=["yaw", "x", "y"], 
+                                   #state_vars=["DroneController.DescisionState"],
+                                   state_vars=["DroneController.DescisionState", "yaw", "x", "y"],
+                                   point_vars=["time"],
+                                   #point_vars=["yaw", "x", "y"],
                                    observables=["action"])
 
 
@@ -234,14 +277,54 @@ def run(template_file, query_file, verifyta_path):
     learning_time_accum = 0
 
     use_baseline = False
+    copy_action_seq = None
+# offboard_thread = threading.Thread(target=rclpy.spin, args=(offboard_control_instance,), daemon=True)
+    run_drone_thread = threading.Thread(target=run_action_seq, args=([4, 4, 4, 4], 0, 0, 0), daemon=True)
+    run_drone_thread.start()
 
-    run_action_seq([4,4,4,4])
+    print("Sending commands to drone.")
+    drone_start_time = time.time()
+    while run_drone_thread.is_alive():
+        # Giving 2 minuttes for the drone to turn
+        if time.time() - drone_start_time >= 60 * 2:
+            print("Drone is non-responsive", file=sys.stderr)
+            print("Killing Child Processes", file=sys.stderr)
+            pid = os.getpid()
+            process = psutil.Process(pid)
 
+            for c in process.children(recursive=True):
+                c.kill()
+
+            gz_p = None
+            try:
+                for p in psutil.process_iter(['cmdline']):
+                    if p.info['cmdline'] and 'gz sim' in ' '.join(p.info['cmdline']):
+                        gz_p = p
+                if gz_p != None:
+                    gz_p.send_signal(signal.SIGKILL)
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                print('No process with gz :thinking:')
+                pass
+
+            raise Exception("The drone is not responsive")
+        time.sleep(0.1)
+
+    run_drone_thread.join()
+    print("Drone responds to commands")
+    # run_action_seq([4,4,4,4], 0, 0, 0)
+    # Initial wait to ensure that the map is updated!
+    print("Started sleeping for 5 sec")
+    time.sleep(5)
+
+
+    #while N <= 2:
     while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and check_map_closed(state, ALLOWED_GAP_IN_MAP)) and CURR_TIME_SPENT < TIME_PER_RUN:
         K_START_TIME = time.time()
 
         if train == True or k % horizon == 0:
             N = N + 1
+            print("Started sleeping for 5 sec")
+            time.sleep(5)
             print("Beginning trainng for iteration {}".format(N))
 
             controller.init_simfile()
@@ -267,7 +350,8 @@ def run(template_file, query_file, verifyta_path):
                 "drone_diameter": drone_specs.drone_diameter,
                 "safety_range": drone_specs.safety_range,
                 "range_laser": drone_specs.laser_range, 
-                "laser_range_diameter": drone_specs.laser_range_diameter
+                "laser_range_diameter": drone_specs.laser_range_diameter,
+                "upper_pump_detection_range": drone_specs.upper_pump_detection_range
             }
             controller.insert_state(uppaal_state)
             train = False
@@ -297,11 +381,14 @@ def run(template_file, query_file, verifyta_path):
                     if(train == True):
                         state = get_current_state()
                         continue"""
+                controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
                 action_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
+                os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
             else:
                 action_seq = get_path_from_bfs(state, drone_specs, map_config)
             
-        
+            copy_action_seq = [x for x in action_seq]
+            
             k = 0
             UPPAAL_END_TIME = time.time()
             K_END_TIME = time.time()
@@ -310,6 +397,14 @@ def run(template_file, query_file, verifyta_path):
             learning_time_accum += learning_time
             print("Working on iteration {} took: {:0.4f} seconds, of that training took: {:0.4f} seconds.".format(N, iteration_time, learning_time))
             print("Got action sequence from STRATEGO: ", action_seq)
+
+            with open("sequence_{}.txt".format(N), "w") as f:
+                f.write(str([action_names[a] for a in action_seq]))
+            os.rename("./sequence_{}.txt".format(N), "./" + res_folder + "/sequence_{}.txt".format(N))
+
+            print("Action sequence by name:")
+            print([action_names[a] for a in action_seq])
+
             #write_to_csv(f'experiments/training_time.csv', [state.map_height * state.map_width, learning_time])
         
         k=k+1
@@ -318,7 +413,7 @@ def run(template_file, query_file, verifyta_path):
             k = 0
         else: 
             action = action_seq.pop(0)
-            action_was_activated = activate_action_with_shield(action)
+            action_was_activated = activate_action_with_shield(action, k, N, copy_action_seq)
             state = get_current_state()
 
             if action_was_activated == False:
@@ -347,12 +442,40 @@ def main():
     run_xrce_agent()
     time.sleep(3)
 
+    print("Manually starting onboarding controller")
+    executor_controller = rclpy.executors.SingleThreadedExecutor()
     offboard_control_instance = offboard_control.OffboardControl()
-    offboard_control.init(offboard_control_instance)
+    executor_controller.add_node(offboard_control_instance)
+    offboard_thread = threading.Thread(target=executor_controller.spin, daemon=True)
+    offboard_thread.start()
+    time.sleep(5)
+    print("Done onboarding controller")
+
+    print("Manually starting Odometry")
     odom_publisher_instance = odom_publisher.FramePublisher()
-    odom_publisher.init(odom_publisher_instance)
+
+    executor_odom = rclpy.executors.SingleThreadedExecutor()
+    executor_odom.add_node(odom_publisher_instance)
+    odom_thread = threading.Thread(target=executor_odom.spin, daemon=True)
+    odom_thread.start()
+    print("Odom pid:", odom_thread.native_id)
+    time.sleep(5)
+    print("Done with Odometry")
+
+    print("Manually starting Map Framer")
     map_drone_tf_listener_instance = vehicle_odometry.MapDroneFrameListener()
-    vehicle_odometry.init_map_drone_tf(map_drone_tf_listener_instance)
+    #vehicle_odometry.init_map_drone_tf(map_drone_tf_listener_instance)
+
+    executor_frame = rclpy.executors.SingleThreadedExecutor()
+    executor_frame.add_node(map_drone_tf_listener_instance)
+    frame_thread = threading.Thread(target=executor_frame.spin, daemon=True)
+    frame_thread.start()
+    print("Frame pid:", frame_thread.native_id)
+    time.sleep(2)
+    print("Done with Map Framer")
+
+
+    print("All nodes are spinning")
     ap = argparse.ArgumentParser()
     ap.add_argument("-t", "--template-file", default="drone_model_stompc_continuous.xml", 
         help="Path to Stratego .xml file model template")
@@ -365,34 +488,207 @@ def main():
     base_path = os.path.dirname(os.path.realpath(__file__)) 
     template_file = os.path.join(base_path, args.template_file)
     query_file = os.path.join(base_path, args.query_file)
-    
+
+    drone_start_time = time.time()
     while offboard_control_instance.has_aired == False:
-        #print(offboard_control_instance.vehicle_local_position.z)
+        # Giving 2 minuttes for the drone to lift off
+        if time.time() - drone_start_time >= 60 * 2:
+            print("No lift-off of drone", file=sys.stderr)
+            print("Killing Child Processes", file=sys.stderr)
+
+            offboard_control_instance.destroy_node()
+            odom_publisher_instance.destroy_node()
+            map_drone_tf_listener_instance.destroy_node()
+
+            executor_controller.shutdown()
+            executor_odom.shutdown()
+            executor_frame.shutdown()
+
+            rclpy.shutdown()
+
+            pid = os.getpid()
+            process = psutil.Process(pid)
+
+            for c in process.children(recursive=True):
+                c.kill()
+
+            gz_p = None
+            try:
+                for p in psutil.process_iter(['cmdline']):
+                    if p.info['cmdline'] and 'gz sim' in ' '.join(p.info['cmdline']):
+                        gz_p = p
+                if gz_p != None:
+                    gz_p.send_signal(signal.SIGKILL)
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                print('No process with gz :thinking:')
+                pass
+
+            raise Exception("The drone is stuck in liftoff")
+
         time.sleep(0.1)
 
-    run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)   
+    print("Successful lift-off of drone")
+
+    print("Starting launch")
+    run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)
+    # #clock_thread = Popen('ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock --ros-args --remap "__node:=bridge_clock"',
+    # clock_thread = Popen('ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock',
+    #                      shell=True,
+    #                      stdout=PIPE,
+    #                      stderr=PIPE)
+    # time.sleep(2)
+    # depth_thread = Popen('ros2 run ros_gz_bridge parameter_bridge /depth_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'
+    #                      ' --ros-args --remap /depth_camera/points:=/cloud',
+    #                      shell=True,
+    #                      stdout=PIPE,
+    #                      stderr=PIPE)
+    # time.sleep(2)
+    # # /opt/ros/humble/share/slam_toolbox
+    # slam_thread = Popen('ros2 launch /opt/ros/humble/share/slam_toolbox/launch online_async_launch.py',
+    #                      shell=True,
+    #                      stdout=PIPE,
+    #                      stderr=PIPE)
+    # time.sleep(2)
+    #depth_camera_bridge = Node(
+    #    package='ros_gz_bridge',
+    #    executable='parameter_bridge',
+    #   arguments=['/depth_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'],
+    #   remappings=[('/depth_camera/points','/cloud')]
+    #
+
+
+    # ls = LaunchService()
+    # ls.include_launch_description(generate_launch_description())
+    # ls.run_async()
+
     time.sleep(5)
+
+    #launch_nodes = generate_launch_nodes()
+    #executor_launch_nodes = rclpy.executors.SingleThreadedExecutor()
+    #for ln in launch_nodes:
+    #    executor_launch_nodes.add_node(ln)
+    #launch_thread = threading.Thread(target=executor_launch_nodes.spin)
+
+    #launch_thread = threading.Thread(target=ls.run, daemon=True)
+    #launch_thread.start()
+    #ls.run_async()
+    print("Completed Launch")
+
+
+    time.sleep(30)
     pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, query_file, args.verifyta_path)
     print("Run finished. Turning off drone and getting ready for reset")
     offboard_control_instance.shutdown_drone = True
+    #offboard_control_instance.destroy_node()
+
+
+
     #kill_gz()
+    offboard_control_instance.destroy_node()
+    odom_publisher_instance.destroy_node()
+    map_drone_tf_listener_instance.destroy_node()
+    # context.shutdown()
+    #raise KeyboardInterrupt()
+
+
+    #print("Shutdown 1")
+    executor_controller.shutdown()
+
+    #print("Shutdown 2")
+    executor_odom.shutdown()
+
+    #print("Shutdown 3")
+    executor_frame.shutdown()
+
+    # print("Shutdown executor for launch nodes")
+
+
+
+    #print("Quiting bridges")
+    #clock_thread.kill()
+    #time.sleep(3)
+    #depth_thread.send_signal(signal.SIGINT)
+    #time.sleep(3)
+    #slam_thread.send_signal(signal.SIGINT)
+    #time.sleep(3)
+    #ls.shutdown()
+    #time.sleep(2)
+
+    rclpy.shutdown() 
+    time.sleep(4)
+
+
+
+    #print("Joining Threads")
+    #offboard_thread.join()
+    #odom_thread.join()
+    #frame_thread.join()
+    # launch_thread.join()
+
+
+    # Popen("./killall.sh", shell=True).wait()
+
     return [pumps_found, map_closed, room_covered, CURR_TIME_SPENT / 60, N, learning_time_accum, num_of_actions, True if room_covered > 105 else False], False if room_covered < 10 else True
 
 
 def create_csv(filename):
-    """ Used to create initial csv file  """     
+    """ Used to create initial csv file  """
     fields = ['found_all_pumps', 'map_closed', 'coverage_of_room', 'time_taken', 'times_trained', 'avg_training_time', 'actions_activated', 'possible_crash']
     #fields = ['total_cells', 'training_time']
     with open(filename, 'w+') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
         writer.writerow(fields)
 
+def kill_process_and_children(p):
+    for child in process.children(recursive=True):  # or parent.children() for recursive=False
+        print("Lower Level Child Process: {}".format(child.pid))
+        kill_process_and_children(child)
+        child.kill()
+    p.kill()
+
 if __name__ == "__main__":
     #file_name = f'Experiment_open={1}_turningcost={20}_movingcost={20}_discoveryreward={10}_pumpreward={1000}_safetyrange={40}cm_maxiter={learning_args["max-iterations"]}_rnb={learning_args["reset-no-better"]}_gr={learning_args["good-runs"]}_tr={learning_args["total-runs"]}_rps={learning_args["runs-pr-state"]}.csv'
-    file_name = f'experiments/nobug_Experiment_open=1_turningcost=20_movingcost=20_discoveryreward=10_pumpreward=1000_safetyrange=40cm_maxiter=3_rnb=default_gr={learning_args["good-runs"]}_tr={learning_args["total-runs"]}_rps=default_h=20.csv'
+    #file_name = f'experiments/nobug_Experiment_open=1_turningcost=20_movingcost=20_discoveryreward=10_pumpreward=1000_safetyrange=40cm_maxiter=3_rnb=default_gr={learning_args["good-runs"]}_tr={learning_args["total-runs"]}_rps=default_h=20.csv'
+    file_name = "summary.csv"
     #create_csv(file_name)
+
+    global res_folder
+    print("Creating results folder")
+    res_folder = "./results/"  + datetime.datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+    os.makedirs(res_folder)
 
     res, takeoff = main()
     print("\nResults for run:\n   Found all pumps: {}\n   Map closed: {}\n   Total coverage of room: {}\n   Total time taken (in minutes): {}\n   Number of times trained: {}\n   Average training time: {}\n   Number of actions activated: {}\n   Possible crash: {}\n   Takeoff: {}\n".format(res[0],res[1],res[2],res[3],res[4],res[5], res[6], res[7], takeoff))
     if takeoff:
         write_to_csv(file_name, res)
+        os.rename("./" + file_name,
+                  "./" + res_folder + "/" + file_name)
+
+    with open( "./" + res_folder + "/actions_taken.csv", "w") as f:
+        f.write("\n".join(actions_taken))
+
+
+    pid = os.getpid()
+    print("Main Process: {}".format(pid))
+    process = psutil.Process(pid)
+
+    Popen("./killall.sh", shell=True).wait()
+
+    for c in process.children(recursive=True):  # or parent.children() for recursive=False
+        print("Child Process: {}".format(c.pid))
+        c.kill()
+
+    gz_p = None
+    try:
+        for p in psutil.process_iter(['cmdline']):
+            if p.info['cmdline'] and 'gz sim' in ' '.join(p.info['cmdline']):
+                gz_p = p
+        if gz_p != None:
+            gz_p.send_signal(signal.SIGKILL)
+    except (psutil.AccessDenied, psutil.NoSuchProcess):
+        print('No process with gz :thinking:')
+        pass
+
+
+    print("Done!")
+
