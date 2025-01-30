@@ -14,11 +14,12 @@ class State:
 
 
 class DroneSpecs:
-    def __init__(self, drone_diameter:float, safety_range:float, laser_range:int, laser_range_diameter: int):
+    def __init__(self, drone_diameter:float, safety_range:float, laser_range:int, laser_range_diameter: int, upper_pump_detection_range: float):
         self.drone_diameter = drone_diameter
         self.safety_range = safety_range
         self.laser_range = laser_range
         self.laser_range_diameter = laser_range_diameter
+        self.upper_pump_detection_range = upper_pump_detection_range
 
 
 class TrainingParameters:

@@ -62,7 +62,7 @@ const bool open = //TAG_open;
 
 double accum_reward = 0;
 
-const double upper_range_pump_detection = 0.75;
+const double upper_range_pump_detection = //TAG_upper_pump_detection_range;
 const double lower_range_pump_detection = 0.55;
 
 void calculate_reward() {

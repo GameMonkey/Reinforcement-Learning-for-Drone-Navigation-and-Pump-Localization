@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..50}
+for i in {1..80}
 do
     echo "Running experiment ${i}"
     python3 stompc.py

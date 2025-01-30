@@ -1,4 +1,4 @@
-strategy opt = maxE(accum_reward) [<=21]{DroneController.DescisionState}->{yaw,x,y} : <> (DroneController.target || time >= 20)
+strategy opt = maxE(accum_reward) [<=21]{DroneController.DescisionState,yaw,x,y}->{time} : <> (DroneController.target || time >= 20)
  
 saveStrategy("./strategy.json", opt)
  

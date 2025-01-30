@@ -18,10 +18,6 @@ action_names = {4: f"Turn {PI_half_neg}",
                 11: "0.5 in positive x",
                 12: "0.5 in positive y",
                 13: "0.5 in negative x",
-                10: "0.5 in negative y",
-                11: "0.5 in positive x",
-                12: "0.5 in positive y",
-                13: "0.5 in negative x",
                 20: "1 in negative y",
                 21: "1 in positive x",
                 22: "1 in positive y",
@@ -306,7 +302,7 @@ def check_if_drone_can_see_pump(state:State, pump: Pump, drone_specs: DroneSpecs
     if x_index > state.map_width or y_index > state.map_height:
         return False
     
-    n_foward_cells_to_search = int(0.75 / state.map_granularity) #TODO change to interval like in UPPAAL, 0.75 should be a TAG
+    n_foward_cells_to_search = int(drone_specs.upper_pump_detection_range / state.map_granularity) #TODO change to interval like in UPPAAL, 0.75 should be a TAG
     n_diamter_cells_to_search = int(drone_specs.laser_range_diameter / state.map_granularity)
 
     if(n_foward_cells_to_search % 2 == 0):

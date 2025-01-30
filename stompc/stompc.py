@@ -57,7 +57,7 @@ e_turn = 0.05
 e_move = 0.1
 uppaa_e = 0.5
 
-drone_specs = DroneSpecs(drone_diameter=0.6,safety_range=0.4,laser_range=4,laser_range_diameter=3)
+drone_specs = DroneSpecs(drone_diameter=0.6,safety_range=0.4,laser_range=4,laser_range_diameter=3, upper_pump_detection_range=1.25)
 training_parameters = TrainingParameters(open=1, turning_cost=200.0, moving_cost=10.0, discovery_reward=1.0, pump_exploration_reward=10000000.0)
 learning_args = {
     "max-iterations": "3",
@@ -70,7 +70,7 @@ learning_args = {
     }
 
 global map_config
-map_config = get_baseline_one_pump_config()
+map_config = get_baseline_cylinder_room_config()
 
 
 def write_to_csv(filename, res):
@@ -251,7 +251,7 @@ def run(template_file, query_file, verifyta_path):
     print("running uppaal")
     controller = QueueLengthController(
         templatefile=template_file,
-        state_names=["x", "y", "yaw", "width_map","height_map", "map", "granularity_map", "open", "discovery_reward", "turning_cost", "moving_cost", "drone_diameter", "safety_range", "range_laser", "laser_range_diameter", "pump_exploration_reward"])
+        state_names=["x", "y", "yaw", "width_map","height_map", "map", "granularity_map", "open", "discovery_reward", "turning_cost", "moving_cost", "drone_diameter", "safety_range", "range_laser", "laser_range_diameter", "pump_exploration_reward", "upper_pump_detection_range"])
     # initial drone state
     x = float(vehicle_odometry.get_drone_pos_x())
     y = float(vehicle_odometry.get_drone_pos_y())
@@ -350,7 +350,8 @@ def run(template_file, query_file, verifyta_path):
                 "drone_diameter": drone_specs.drone_diameter,
                 "safety_range": drone_specs.safety_range,
                 "range_laser": drone_specs.laser_range, 
-                "laser_range_diameter": drone_specs.laser_range_diameter
+                "laser_range_diameter": drone_specs.laser_range_diameter,
+                "upper_pump_detection_range": drone_specs.upper_pump_detection_range
             }
             controller.insert_state(uppaal_state)
             train = False
