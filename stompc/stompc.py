@@ -44,7 +44,7 @@ ENV_GZ_PATH = os.environ['GZ_PATH']
 ENV_LAUNCH_FILE_PATH = os.environ['LAUNCH_FILE_PATH']
 
 #Experiment settings
-TIME_PER_RUN = 600
+TIME_PER_RUN = 600 # time allowed in a run in seconds.
 RUN_START = None
 CURR_TIME_SPENT = 0
 ALLOWED_GAP_IN_MAP = 1
@@ -70,7 +70,7 @@ learning_args = {
     }
 
 global map_config
-map_config = get_baseline_cylinder_room_config()
+map_config = get_baseline_one_pump_config()
 
 
 def write_to_csv(filename, res):

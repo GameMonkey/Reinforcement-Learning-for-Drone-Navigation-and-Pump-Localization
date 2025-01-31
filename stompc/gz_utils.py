@@ -8,10 +8,10 @@ gz_process = None
 launch_process = None
 xrce_cmd = 'MicroXRCEAgent udp4 -p 8888'
 room_A_start_pos = "PX4_GZ_MODEL_POSE='-4.0,2.0,0.24'"
-room_D_cylinder_map = 'PX4_GZ_MODEL_POSE="-1.0,3.0,0.24"'
-big_room = 'PX4_GZ_MODEL_POSE="6.0,-7.0,0.24"'
 room_B_tetris_room = 'PX4_GZ_MODEL_POSE="-3.5,-2.0,0.24"'
-gz_cmd = 'PX4_SYS_AUTOSTART=4002 HEADLESS=0 ' + room_D_cylinder_map + ' make px4_sitl gz_x500_depth'
+room_C_big_room = 'PX4_GZ_MODEL_POSE="6.0,-7.0,0.24"'
+room_D_cylinder_map = 'PX4_GZ_MODEL_POSE="-1.0,3.0,0.24"'
+gz_cmd = 'PX4_SYS_AUTOSTART=4002 HEADLESS=0 ' + room_A_start_pos + ' make px4_sitl gz_x500_depth'
 launch_file = 'bridges_and_nodes_launch.py'
 
 # SHOULD NOT BE USED, KEPT IN BECAUSE IT MIGHT BE FIXED LATER!!
