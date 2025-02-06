@@ -531,47 +531,7 @@ def main():
 
     print("Starting launch")
     run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)
-    # #clock_thread = Popen('ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock --ros-args --remap "__node:=bridge_clock"',
-    # clock_thread = Popen('ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock',
-    #                      shell=True,
-    #                      stdout=PIPE,
-    #                      stderr=PIPE)
-    # time.sleep(2)
-    # depth_thread = Popen('ros2 run ros_gz_bridge parameter_bridge /depth_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'
-    #                      ' --ros-args --remap /depth_camera/points:=/cloud',
-    #                      shell=True,
-    #                      stdout=PIPE,
-    #                      stderr=PIPE)
-    # time.sleep(2)
-    # # /opt/ros/humble/share/slam_toolbox
-    # slam_thread = Popen('ros2 launch /opt/ros/humble/share/slam_toolbox/launch online_async_launch.py',
-    #                      shell=True,
-    #                      stdout=PIPE,
-    #                      stderr=PIPE)
-    # time.sleep(2)
-    #depth_camera_bridge = Node(
-    #    package='ros_gz_bridge',
-    #    executable='parameter_bridge',
-    #   arguments=['/depth_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'],
-    #   remappings=[('/depth_camera/points','/cloud')]
-    #
-
-
-    # ls = LaunchService()
-    # ls.include_launch_description(generate_launch_description())
-    # ls.run_async()
-
     time.sleep(5)
-
-    #launch_nodes = generate_launch_nodes()
-    #executor_launch_nodes = rclpy.executors.SingleThreadedExecutor()
-    #for ln in launch_nodes:
-    #    executor_launch_nodes.add_node(ln)
-    #launch_thread = threading.Thread(target=executor_launch_nodes.spin)
-
-    #launch_thread = threading.Thread(target=ls.run, daemon=True)
-    #launch_thread.start()
-    #ls.run_async()
     print("Completed Launch")
 
 
@@ -579,54 +539,21 @@ def main():
     pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, query_file, args.verifyta_path)
     print("Run finished. Turning off drone and getting ready for reset")
     offboard_control_instance.shutdown_drone = True
-    #offboard_control_instance.destroy_node()
 
 
 
-    #kill_gz()
     offboard_control_instance.destroy_node()
     odom_publisher_instance.destroy_node()
     map_drone_tf_listener_instance.destroy_node()
-    # context.shutdown()
-    #raise KeyboardInterrupt()
 
 
-    #print("Shutdown 1")
     executor_controller.shutdown()
-
-    #print("Shutdown 2")
     executor_odom.shutdown()
-
-    #print("Shutdown 3")
     executor_frame.shutdown()
-
-    # print("Shutdown executor for launch nodes")
-
-
-
-    #print("Quiting bridges")
-    #clock_thread.kill()
-    #time.sleep(3)
-    #depth_thread.send_signal(signal.SIGINT)
-    #time.sleep(3)
-    #slam_thread.send_signal(signal.SIGINT)
-    #time.sleep(3)
-    #ls.shutdown()
-    #time.sleep(2)
 
     rclpy.shutdown() 
     time.sleep(4)
 
-
-
-    #print("Joining Threads")
-    #offboard_thread.join()
-    #odom_thread.join()
-    #frame_thread.join()
-    # launch_thread.join()
-
-
-    # Popen("./killall.sh", shell=True).wait()
 
     return [pumps_found, map_closed, room_covered, CURR_TIME_SPENT / 60, N, learning_time_accum, num_of_actions, True if room_covered > 105 else False], False if room_covered < 10 else True
 
@@ -691,4 +618,3 @@ if __name__ == "__main__":
 
 
     print("Done!")
-
