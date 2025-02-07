@@ -1,9 +1,9 @@
 from classes import Pump,MapConfig
 
 
-##################################
-### BASELINE MAP WITH ONE PUMP ###
-##################################
+###########################################
+### BASELINE MAP WITH ONE PUMP - ROOM A ###
+###########################################
 def get_baseline_one_pump_config():
     pump = Pump(-4.5,-7.2)
     fake_pump = Pump(0,-8.5)

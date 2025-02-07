@@ -489,6 +489,7 @@ def main():
     template_file = os.path.join(base_path, args.template_file)
     query_file = os.path.join(base_path, args.query_file)
 
+
     drone_start_time = time.time()
     while offboard_control_instance.has_aired == False:
         # Giving 2 minuttes for the drone to lift off
