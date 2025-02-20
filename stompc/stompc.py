@@ -1,4 +1,3 @@
-import random
 import argparse
 import os
 import rclpy
@@ -8,6 +7,7 @@ import strategoutil as sutil
 import time
 import math
 import csv
+import yaml
 import datetime
 import signal
 from subprocess import Popen, PIPE
@@ -31,25 +31,25 @@ from classes import State, DroneSpecs, TrainingParameters
 from maps import get_baseline_one_pump_config, get_baseline_two_pumps_config, get_baseline_big_room_config, get_baseline_tetris_room_config,get_baseline_cylinder_room_config
 
 
+
+
 global offboard_control_instance
 global odom_publisher_instance
 global map_drone_tf_listener_instance
 global res_folder
 global actions_taken
-actions_taken = []
+global args
 
 ENV_DOMAIN = os.environ['DOMAIN']
 ENV_VERIFYTA_PATH = os.environ['VERIFYTA_PATH']
 ENV_GZ_PATH = os.environ['GZ_PATH']
 ENV_LAUNCH_FILE_PATH = os.environ['LAUNCH_FILE_PATH']
 
-#Experiment settings
-TIME_PER_RUN = 600 # time allowed in a run in seconds.
+#Non Experimental settings
 RUN_START = None
 CURR_TIME_SPENT = 0
 ALLOWED_GAP_IN_MAP = 1
-
-
+actions_taken = []
 half_PI_right = 1.57   # 90 degrees right
 half_PI_left = -1.57   # 90 degrees left
 full_PI_turn = 3.14    # 180 degress turn
@@ -57,18 +57,51 @@ e_turn = 0.05
 e_move = 0.1
 uppaa_e = 0.5
 
-drone_specs = DroneSpecs(drone_diameter=0.6,safety_range=0.4,laser_range=4,laser_range_diameter=3, upper_pump_detection_range=1.25)
-training_parameters = TrainingParameters(open=1, turning_cost=200.0, moving_cost=10.0, discovery_reward=1.0, pump_exploration_reward=10000000.0)
-learning_args = {
-    "max-iterations": "3",
-    #"reset-no-better": "5",
-    "good-runs": "50",
-    "total-runs": "300"
-    #"eval-runs": 300,
-    #"runs-pr-state": 300,
-    #"runs-pr-state": "100"
-    }
+ap = argparse.ArgumentParser()
+ap.add_argument("-t", "--template-file", default="drone_model_stompc_continuous.xml",
+                help="Path to Stratego .xml file model template")
+ap.add_argument("-q", "--query-file", default="query.q",
+                help="Path to Stratego .q query file")
+ap.add_argument("-v", "--verifyta-path", default=ENV_VERIFYTA_PATH, help=
+"Path to verifyta executable")
+ap.add_argument("-cfg", "--config-file", default="./default_run_setup.yaml", help="Path to experiment .yaml config file")
 
+args = ap.parse_args()
+
+#Experiment settings
+config_file = args.config_file
+print(config_file)
+
+with open(config_file) as f:
+    config = yaml.safe_load(f)
+    drone_cfg = config['experiment_setup']['drone_specs']
+    learning_params = config['experiment_setup']['uppaal_params']
+    training_params = config['experiment_setup']['training_params']
+    TIME_PER_RUN = config['experiment_setup']['run_settings']['time_per_run'] # time allowed in a run in seconds.
+
+    drone_specs = DroneSpecs(drone_diameter=drone_cfg['drone_diameter'],
+                             safety_range=drone_cfg['safety_range'],
+                             laser_range=drone_cfg['laser_range'],
+                             laser_range_diameter=drone_cfg['laser_range_diameter'],
+                             upper_pump_detection_range=drone_cfg['upper_pump_detection_range'])
+
+    training_parameters = TrainingParameters(open=training_params['open'],
+                                             turning_cost=training_params['turning_cost'],
+                                             moving_cost=training_params['moving_cost'],
+                                             discovery_reward=training_params['discovery_reward'],
+                                             pump_exploration_reward=training_params['pump_exploration_reward'],)
+    learning_args = {
+        "max-iterations": learning_params['max_iterations'],
+        "reset-no-better": learning_params['reset_no_better'],
+        "good-runs": learning_params['good_runs'],
+        "total-runs": learning_params['total_runs'],
+        "eval-runs": learning_params['eval_runs'],
+        "runs-pr-state": learning_params['runs_pr_state'],
+        }
+
+print(learning_args)
+print(drone_cfg)
+print(training_params)
 global map_config
 map_config = get_baseline_one_pump_config()
 
@@ -428,13 +461,18 @@ def run(template_file, query_file, verifyta_path):
                 num_of_actions += 1
         CURR_TIME_SPENT = time.time() - RUN_START
 
-    return all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps), check_map_closed(state, ALLOWED_GAP_IN_MAP), measure_coverage(get_current_state(), map_config), N, learning_time_accum / N, num_of_actions
+    if N == 0:
+        avg_learning_time = 0
+    else:
+        avg_learning_time = learning_time_accum / N
+    return all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps), check_map_closed(state, ALLOWED_GAP_IN_MAP), measure_coverage(get_current_state(), map_config), N, avg_learning_time, num_of_actions
 
 def main():
     global offboard_control_instance
     global odom_publisher_instance
     global map_drone_tf_listener_instance
     global RUN_START
+    global args
     RUN_START = time.time()
     init_rclpy(ENV_DOMAIN)
     run_gz(GZ_PATH=ENV_GZ_PATH)
@@ -476,19 +514,9 @@ def main():
 
 
     print("All nodes are spinning")
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-t", "--template-file", default="drone_model_stompc_continuous.xml", 
-        help="Path to Stratego .xml file model template")
-    ap.add_argument("-q", "--query-file", default="query.q",
-        help="Path to Stratego .q query file")
-    ap.add_argument("-v", "--verifyta-path", default=ENV_VERIFYTA_PATH, help=
-        "Path to verifyta executable")
-
-    args = ap.parse_args()
     base_path = os.path.dirname(os.path.realpath(__file__)) 
     template_file = os.path.join(base_path, args.template_file)
     query_file = os.path.join(base_path, args.query_file)
-
 
     drone_start_time = time.time()
     while offboard_control_instance.has_aired == False:
@@ -575,10 +603,7 @@ def kill_process_and_children(p):
     p.kill()
 
 if __name__ == "__main__":
-    #file_name = f'Experiment_open={1}_turningcost={20}_movingcost={20}_discoveryreward={10}_pumpreward={1000}_safetyrange={40}cm_maxiter={learning_args["max-iterations"]}_rnb={learning_args["reset-no-better"]}_gr={learning_args["good-runs"]}_tr={learning_args["total-runs"]}_rps={learning_args["runs-pr-state"]}.csv'
-    #file_name = f'experiments/nobug_Experiment_open=1_turningcost=20_movingcost=20_discoveryreward=10_pumpreward=1000_safetyrange=40cm_maxiter=3_rnb=default_gr={learning_args["good-runs"]}_tr={learning_args["total-runs"]}_rps=default_h=20.csv'
     file_name = "summary.csv"
-    #create_csv(file_name)
 
     global res_folder
     print("Creating results folder")
