@@ -10,7 +10,7 @@ for file in "$cfg_dir"/*.yaml; do
         echo "Running experiment ${i}"
         python3 stompc.py -cfg "$file"
         
-        echo "Sleepting for 10 seconds before next experiment"
+        echo "Sleeping for 10 seconds before next experiment"
         sleep 10
         
         printf "\n\n\n"
