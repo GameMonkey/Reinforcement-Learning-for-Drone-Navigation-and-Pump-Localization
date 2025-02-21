@@ -70,7 +70,6 @@ args = ap.parse_args()
 
 #Experiment settings
 config_file = args.config_file
-print(config_file)
 
 with open(config_file) as f:
     config = yaml.safe_load(f)
@@ -94,9 +93,6 @@ with open(config_file) as f:
     for k,v in learning_params.items():
         learning_args[k] = v
     
-print(learning_args)
-print(drone_cfg)
-print(training_params)
 global map_config
 map_config = get_baseline_one_pump_config()
 

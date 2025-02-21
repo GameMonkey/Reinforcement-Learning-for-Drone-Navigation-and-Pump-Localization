@@ -25,6 +25,7 @@ for file in "$cfg_dir"/*.yaml; do
     find "$results_dir" -mindepth 1 -maxdepth 1 -type d ! -name "$filename" -exec mv {} "$output_folder" \;
     cp "$results_dir/basic_data_analysis.ipynb" "$output_folder"
     cp "$file" "$output_folder"
+    cp "query.q" "$output_folder"
 
     zip -r "$results_dir/$filename.zip" "$output_folder"
     echo "All results succesfully placed in $output_folder.zip"
