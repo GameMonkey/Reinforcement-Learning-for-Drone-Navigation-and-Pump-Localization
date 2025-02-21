@@ -4,7 +4,7 @@ cfg_dir="./experiment_setups"
 results_dir="./results"
 
 for file in "$cfg_dir"/*.yaml; do
-    echo "Beginning runs for setup: $file"
+    echo "Beginning runs for setup: $(basename "$file")"
 
     for i in $(eval echo {1..$1}); do
         echo "Running experiment ${i}"
@@ -20,14 +20,17 @@ for file in "$cfg_dir"/*.yaml; do
     output_folder="$filename"
     mkdir -p "$output_folder"
 
-    echo "Placing results from $filename into $output_folder"
+    echo "Placing results from $filename.yaml into $output_folder"
     
     find "$results_dir" -mindepth 1 -maxdepth 1 -type d ! -name "$filename" -exec mv {} "$output_folder" \;
     cp "$results_dir/basic_data_analysis.ipynb" "$output_folder"
+    cp "$file" "$output_folder"
+
     zip -r "$results_dir/$filename.zip" "$output_folder"
     echo "All results succesfully placed in $output_folder.zip"
 
     rm -rf "$output_folder"
     echo "Deleted $output_folder"
 
+    printf "\n\n\n"
 done

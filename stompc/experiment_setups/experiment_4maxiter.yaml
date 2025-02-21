@@ -5,14 +5,14 @@ experiment_setup:
     world: "baseline_model_one_pump"
     time_per_run: 120
 
-  #UPPAAL learning parameters
+  #UPPAAL learning parameters (Implemented so that these keys are also the keys in the code. It has to be "-" in these names since that is that verifity expects.)
   uppaal_params:
-    max_iterations: 4
-    reset_no_better: 4
-    good_runs: 500
-    total_runs: 500
-    eval_runs: 500
-    runs_pr_state: 500
+    max-iterations: 4
+    #reset-no-better: 4
+    good-runs: 500
+    total-runs: 500
+    #eval-runs: 500
+    #runs-pr-state: 500
 
   #Training parameters
   training_params:

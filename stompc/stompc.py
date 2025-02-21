@@ -90,15 +90,10 @@ with open(config_file) as f:
                                              moving_cost=training_params['moving_cost'],
                                              discovery_reward=training_params['discovery_reward'],
                                              pump_exploration_reward=training_params['pump_exploration_reward'],)
-    learning_args = {
-        "max-iterations": learning_params['max_iterations'],
-        "reset-no-better": learning_params['reset_no_better'],
-        "good-runs": learning_params['good_runs'],
-        "total-runs": learning_params['total_runs'],
-        "eval-runs": learning_params['eval_runs'],
-        "runs-pr-state": learning_params['runs_pr_state'],
-        }
-
+    learning_args = {}
+    for k,v in learning_params.items():
+        learning_args[k] = v
+    
 print(learning_args)
 print(drone_cfg)
 print(training_params)
@@ -351,7 +346,7 @@ def run(template_file, query_file, verifyta_path):
 
 
     #while N <= 2:
-    while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and check_map_closed(state, ALLOWED_GAP_IN_MAP)) and CURR_TIME_SPENT < TIME_PER_RUN:
+    while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and measure_coverage(get_current_state(), map_config) < 80) and CURR_TIME_SPENT < TIME_PER_RUN:
         K_START_TIME = time.time()
 
         if train == True or k % horizon == 0:
@@ -438,8 +433,6 @@ def run(template_file, query_file, verifyta_path):
             print("Action sequence by name:")
             print([action_names[a] for a in action_seq])
 
-            #write_to_csv(f'experiments/training_time.csv', [state.map_height * state.map_width, learning_time])
-        
         k=k+1
         if(len(action_seq) == 0):
             train = True
