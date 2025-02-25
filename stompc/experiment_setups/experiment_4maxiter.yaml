@@ -3,7 +3,7 @@ experiment_setup:
   #run settings
   run_settings:
     world: "baseline_model_one_pump"
-    time_per_run: 120
+    time_per_run: 1200
 
   #UPPAAL learning parameters (Implemented so that these keys are also the keys in the code. It has to be "-" in these names since that is that verifity expects.)
   uppaal_params:

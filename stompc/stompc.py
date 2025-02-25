@@ -342,7 +342,7 @@ def run(template_file, query_file, verifyta_path):
 
 
     #while N <= 2:
-    while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and measure_coverage(get_current_state(), map_config) < 80) and CURR_TIME_SPENT < TIME_PER_RUN:
+    while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and measure_coverage(get_current_state(), map_config) > 80) and CURR_TIME_SPENT < TIME_PER_RUN:
         K_START_TIME = time.time()
 
         if train == True or k % horizon == 0:
@@ -465,9 +465,9 @@ def main():
     RUN_START = time.time()
     init_rclpy(ENV_DOMAIN)
     run_gz(GZ_PATH=ENV_GZ_PATH)
-    time.sleep(10)
+    time.sleep(30)
     run_xrce_agent()
-    time.sleep(3)
+    time.sleep(5)
 
     print("Manually starting onboarding controller")
     executor_controller = rclpy.executors.SingleThreadedExecutor()
