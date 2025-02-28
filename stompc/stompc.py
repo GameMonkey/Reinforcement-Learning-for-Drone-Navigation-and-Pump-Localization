@@ -64,7 +64,7 @@ ap.add_argument("-q", "--query-file", default="query.q",
                 help="Path to Stratego .q query file")
 ap.add_argument("-v", "--verifyta-path", default=ENV_VERIFYTA_PATH, help=
 "Path to verifyta executable")
-ap.add_argument("-cfg", "--config-file", default="./experiment_setups/default_run_setup.yaml", help="Path to experiment .yaml config file")
+ap.add_argument("-cfg", "--config-file", default="./experiment_setups/default_config/default_run_setup.yaml", help="Path to experiment .yaml config file")
 
 args = ap.parse_args()
 

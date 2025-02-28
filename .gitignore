@@ -14,4 +14,4 @@ stompc/query.q
 stompc/experiments/*
 stompc/results/*
 stompc/experiment_setups/*
-!stompc/experiment_setups/default_run_setup.yaml
+!stompc/experiment_setups/default_config
