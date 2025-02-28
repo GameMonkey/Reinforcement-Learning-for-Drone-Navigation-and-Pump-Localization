@@ -13,3 +13,5 @@ stompc/drone_model_stompc_continuous_sim.xml
 stompc/query.q
 stompc/experiments/*
 stompc/results/*
+stompc/experiment_setups/*
+!stompc/experiment_setups/default_run_setup.yaml
