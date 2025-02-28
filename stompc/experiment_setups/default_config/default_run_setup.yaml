@@ -4,6 +4,7 @@ experiment_setup:
   run_settings:
     world: "baseline_model_one_pump"
     time_per_run: 600
+    granularity: 0.05 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
 
   #UPPAAL learning parameters (Implemented so that these keys are also the keys in the code. It has to be "-" in these names since that is that verifity expects.)
   uppaal_params:

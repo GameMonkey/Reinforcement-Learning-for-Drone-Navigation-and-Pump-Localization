@@ -70,6 +70,7 @@ args = ap.parse_args()
 
 #Experiment settings
 config_file = args.config_file
+global map_config
 
 with open(config_file) as f:
     config = yaml.safe_load(f)
@@ -78,6 +79,15 @@ with open(config_file) as f:
     training_params = config['experiment_setup']['training_params']
     TIME_PER_RUN = config['experiment_setup']['run_settings']['time_per_run'] # time allowed in a run in seconds.
 
+    if 'granularity' in config['experiment_setup']['run_settings'].keys():
+        granularity = config['experiment_setup']['run_settings']['granularity']
+        print(granularity)
+        map_config = get_baseline_one_pump_config(granularity)
+    else:
+        map_config = get_baseline_one_pump_config()
+
+
+    print(map_config.n_cells_in_area)
     drone_specs = DroneSpecs(drone_diameter=drone_cfg['drone_diameter'],
                              safety_range=drone_cfg['safety_range'],
                              laser_range=drone_cfg['laser_range'],
@@ -92,9 +102,7 @@ with open(config_file) as f:
     learning_args = {}
     for k,v in learning_params.items():
         learning_args[k] = v
-    
-global map_config
-map_config = get_baseline_one_pump_config()
+
 
 
 def write_to_csv(filename, res):

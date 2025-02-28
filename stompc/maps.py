@@ -1,13 +1,15 @@
+import math
+
 from classes import Pump,MapConfig
 
 
 ###########################################
 ### BASELINE MAP WITH ONE PUMP - ROOM A ###
 ###########################################
-def get_baseline_one_pump_config():
+def get_baseline_one_pump_config(granularity=0.05):
     pump = Pump(-4.0,-7.2)
     fake_pump = Pump(0,-8.5)
-    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=24480)
+    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=math.ceil((6/granularity)*(10.2/granularity)))
     return config
 
 
