@@ -7,7 +7,7 @@ experiment_setup:
 
   #UPPAAL learning parameters (Implemented so that these keys are also the keys in the code. It has to be "-" in these names since that is that verifity expects.)
   uppaal_params:
-    max-iterations: 3
+    max-iterations: 1
     #reset-no-better: 5
     good-runs: 100
     total-runs: 500
