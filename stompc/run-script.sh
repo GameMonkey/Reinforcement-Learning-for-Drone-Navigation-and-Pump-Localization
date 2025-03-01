@@ -15,7 +15,7 @@ if (( "${#config_files[@]}" )); then
             python3 stompc.py -cfg "$file"
             
             echo "Sleeping for 10 seconds before next experiment"
-            sleep 10
+            sleep 20
             
             printf "\n\n\n"
         done
@@ -47,7 +47,7 @@ else
         python3 stompc.py
 
         echo "Sleeping for 10 seconds before next experiment"
-        sleep 10
+        sleep 20
         
         printf "\n\n\n"
     done
