@@ -81,7 +81,6 @@ with open(config_file) as f:
 
     if 'granularity' in config['experiment_setup']['run_settings'].keys():
         granularity = config['experiment_setup']['run_settings']['granularity']
-        print(granularity)
         map_config = get_baseline_one_pump_config(granularity)
     else:
         map_config = get_baseline_one_pump_config()
