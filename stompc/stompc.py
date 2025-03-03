@@ -10,7 +10,7 @@ import csv
 import yaml
 import datetime
 import signal
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 from multiprocessing import Process, Queue, Pipe
 from bfs import get_path_from_bfs
 sys.path.insert(0, '../')
@@ -143,7 +143,11 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
 
     state = get_current_state()
     if(shield_action(action,state, drone_specs)):
-        state = activate_action(action)
+        try:
+            state = activate_action(action)
+        except Exception as e:
+            Popen("./killall.sh", shell=True).wait()
+            raise e
         actions_taken.append(action_names[action])
     else:
         print("shielded action: {}".format(action))
@@ -163,7 +167,11 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
 
         state = get_current_state()
         if(shield_action(action,state,drone_specs)):
-            activate_action(action)
+            try:
+                activate_action(action)
+            except Exception as e:
+                Popen("./killall.sh", shell=True).wait()
+                raise e
         else:
             print("shielded action: {} twice, training again".format(action))
             print("shielded action: {}".format(action_names[action]))
@@ -255,6 +263,9 @@ def activate_action(action):
     curr_x = float(vehicle_odometry.get_drone_pos_x())
     curr_y = float(vehicle_odometry.get_drone_pos_y())
 
+    cur_action_start = time.time()
+    threshold = 70 # An action should not take more than one 1 and 10 seconds minutes.
+
     if action_is_move:
         offboard_control_instance.x = x
         offboard_control_instance.y = y
@@ -263,11 +274,15 @@ def activate_action(action):
             curr_x = float(vehicle_odometry.get_drone_pos_x())
             curr_y = float(vehicle_odometry.get_drone_pos_y())
             CURR_TIME_SPENT = time.time() - RUN_START
+            if time.time () - cur_action_start > threshold:
+                raise Exception("Move action might have crashed")
     else:
         offboard_control_instance.yaw = yaw
         while((yaw - e_turn > odom_publisher_instance.yaw or odom_publisher_instance.yaw > yaw + e_turn) and CURR_TIME_SPENT < TIME_PER_RUN):
             time.sleep(0.1)
             CURR_TIME_SPENT = time.time() - RUN_START
+            if time.time () - cur_action_start > threshold:
+                raise Exception("Turn action might have crashed")
             
 
     
@@ -316,8 +331,8 @@ def run(template_file, query_file, verifyta_path):
     print("Sending commands to drone.")
     drone_start_time = time.time()
     while run_drone_thread.is_alive():
-        # Giving 2 minuttes for the drone to turn
-        if time.time() - drone_start_time >= 60 * 2:
+        # Giving 1 minuttes for the drone to turn
+        if time.time() - drone_start_time >= 60:
             print("Drone is non-responsive", file=sys.stderr)
             print("Killing Child Processes", file=sys.stderr)
             pid = os.getpid()
@@ -336,7 +351,7 @@ def run(template_file, query_file, verifyta_path):
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 print('No process with gz :thinking:')
                 pass
-
+            Popen("./killall.sh", shell=True).wait()
             raise Exception("The drone is not responsive")
         time.sleep(0.1)
 
@@ -349,7 +364,7 @@ def run(template_file, query_file, verifyta_path):
 
 
     #while N <= 2:
-    while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and measure_coverage(get_current_state(), map_config) > 80) and CURR_TIME_SPENT < TIME_PER_RUN:
+    while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and measure_coverage(get_current_state(), map_config) > 75) and CURR_TIME_SPENT < TIME_PER_RUN:
         K_START_TIME = time.time()
 
         if train == True or k % horizon == 0:
@@ -413,7 +428,10 @@ def run(template_file, query_file, verifyta_path):
                         state = get_current_state()
                         continue"""
                 controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
-                action_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
+                try:
+                    action_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
+                except Exception:
+                    Popen("./killall.sh", shell=True).wait()
                 os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
             else:
                 action_seq = get_path_from_bfs(state, drone_specs, map_config)
@@ -516,8 +534,8 @@ def main():
 
     drone_start_time = time.time()
     while offboard_control_instance.has_aired == False:
-        # Giving 2 minuttes for the drone to lift off
-        if time.time() - drone_start_time >= 60 * 2:
+        # Giving 1 minuttes for the drone to lift off
+        if time.time() - drone_start_time >= 60:
             print("No lift-off of drone", file=sys.stderr)
             print("Killing Child Processes", file=sys.stderr)
 
@@ -561,7 +579,41 @@ def main():
 
 
     time.sleep(30)
-    pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, query_file, args.verifyta_path)
+    try:
+        pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, query_file, args.verifyta_path)
+    except Exception as e:
+        print("Run Failed. Destroying Nodes")
+        print(e)
+
+        offboard_control_instance.destroy_node()
+        odom_publisher_instance.destroy_node()
+        map_drone_tf_listener_instance.destroy_node()
+
+        executor_controller.shutdown()
+        executor_odom.shutdown()
+        executor_frame.shutdown()
+
+        pid = os.getpid()
+        process = psutil.Process(pid)
+
+        for c in process.children(recursive=True):
+            c.kill()
+
+        gz_p = None
+        try:
+            for p in psutil.process_iter(['cmdline']):
+                if p.info['cmdline'] and 'gz sim' in ' '.join(p.info['cmdline']):
+                    gz_p = p
+            if gz_p != None:
+                gz_p.send_signal(signal.SIGKILL)
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
+            print('No process with gz :thinking:')
+            pass
+
+        time.sleep(4)
+
+        raise e
+
     print("Run finished. Turning off drone and getting ready for reset")
     offboard_control_instance.shutdown_drone = True
 
@@ -599,6 +651,7 @@ def kill_process_and_children(p):
     p.kill()
 
 if __name__ == "__main__":
+    Popen("./killall.sh", shell=True,stdout=DEVNULL, stderr=DEVNULL).wait()
     file_name = "summary.csv"
 
     global res_folder
