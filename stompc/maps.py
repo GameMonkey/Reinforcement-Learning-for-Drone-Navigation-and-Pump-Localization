@@ -41,7 +41,7 @@ def get_baseline_tetris_room_config(granularity=0.05):
     pump = Pump(4,-4)
     fake_pump = Pump(0,-7)
     #Rough calculations viewing the room as a square. 
-    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=math.round((8.20488**2)/(granularity**2))
+    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=math.round((8.20488**2)/(granularity**2)))
     return config
 
 
