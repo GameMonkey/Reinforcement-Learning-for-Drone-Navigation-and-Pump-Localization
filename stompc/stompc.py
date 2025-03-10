@@ -302,10 +302,11 @@ def run(template_file, query_file, verifyta_path):
     x = float(vehicle_odometry.get_drone_pos_x())
     y = float(vehicle_odometry.get_drone_pos_y())
     action_seq = []
+    reward_seq = []
     num_of_actions = 0
     N = 0
     optimize = "maxE"
-    learning_param = "accum_reward"
+    learning_param = "accum_reward + accum_penalty"
     state = map_processing.process_map_data(x,y, map_config)
     state.yaw = offboard_control_instance.yaw
     controller.generate_query_file(optimize, learning_param,
@@ -313,11 +314,11 @@ def run(template_file, query_file, verifyta_path):
                                    state_vars=["DroneController.DescisionState", "yaw", "x", "y"],
                                    point_vars=["time"],
                                    #point_vars=["yaw", "x", "y"],
-                                   observables=["action"])
+                                   observables=["action", "accum_reward"],)
 
 
     k = 0
-    actions_left_to_trigger_learning = 3  
+    actions_left_to_trigger_learning = 3
     train = True
     horizon = 10
     learning_time_accum = 0
@@ -374,10 +375,10 @@ def run(template_file, query_file, verifyta_path):
             print("Beginning trainng for iteration {}".format(N))
 
             controller.init_simfile()
-            
+
             """ if(len(action_seq) == actions_left_to_trigger_learning):
                 state = predict_state_based_on_action_seq(action_seq) """
-            
+
             state = get_current_state()
             # insert current state into simulation template
             uppaal_state = {
@@ -388,14 +389,14 @@ def run(template_file, query_file, verifyta_path):
                 "width_map": state.map_width,
                 "height_map": state.map_height,
                 "granularity_map": state.map_granularity,
-                "open": training_parameters.open, 
-                "discovery_reward": training_parameters.disovery_reward, 
-                "turning_cost": training_parameters.turning_cost, 
+                "open": training_parameters.open,
+                "discovery_reward": training_parameters.disovery_reward,
+                "turning_cost": training_parameters.turning_cost,
                 "moving_cost": training_parameters.moving_cost,
-                "pump_exploration_reward": training_parameters.pump_exploration_reward, 
+                "pump_exploration_reward": training_parameters.pump_exploration_reward,
                 "drone_diameter": drone_specs.drone_diameter,
                 "safety_range": drone_specs.safety_range,
-                "range_laser": drone_specs.laser_range, 
+                "range_laser": drone_specs.laser_range,
                 "laser_range_diameter": drone_specs.laser_range_diameter,
                 "upper_pump_detection_range": drone_specs.upper_pump_detection_range
             }
@@ -403,7 +404,7 @@ def run(template_file, query_file, verifyta_path):
             train = False
             UPPAAL_START_TIME = time.time()
 
-            if use_baseline == False:    
+            if use_baseline == False:
                 """parent_conn, child_conn = Pipe()
                     t = Process(target=controller.run, args=(child_conn,query_file,learning_args,verifyta_path,))
                     t.start()
@@ -429,15 +430,15 @@ def run(template_file, query_file, verifyta_path):
                         continue"""
                 controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
                 try:
-                    action_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
+                    action_seq, reward_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
                 except Exception:
                     Popen("./killall.sh", shell=True).wait()
                 os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
             else:
                 action_seq = get_path_from_bfs(state, drone_specs, map_config)
-            
+
             copy_action_seq = [x for x in action_seq]
-            
+
             k = 0
             UPPAAL_END_TIME = time.time()
             K_END_TIME = time.time()
@@ -445,7 +446,7 @@ def run(template_file, query_file, verifyta_path):
             learning_time = UPPAAL_END_TIME-UPPAAL_START_TIME
             learning_time_accum += learning_time
             print("Working on iteration {} took: {:0.4f} seconds, of that training took: {:0.4f} seconds.".format(N, iteration_time, learning_time))
-            print("Got action sequence from STRATEGO: ", action_seq)
+            print("Got action+reward sequence from STRATEGO: ", list(zip(action_seq,reward_seq)))
 
             with open("sequence_{}.txt".format(N), "w") as f:
                 f.write(str([action_names[a] for a in action_seq]))
@@ -458,7 +459,7 @@ def run(template_file, query_file, verifyta_path):
         if(len(action_seq) == 0):
             train = True
             k = 0
-        else: 
+        else:
             action = action_seq.pop(0)
             action_was_activated = activate_action_with_shield(action, k, N, copy_action_seq)
             state = get_current_state()
@@ -467,12 +468,23 @@ def run(template_file, query_file, verifyta_path):
                 train = True
                 k = 0
                 action_seq = []
+                reward_seq = []
             """elif len(action_seq) == actions_left_to_trigger_learning:
                 train = True
                 k = 0 """
-            
             if action_was_activated:
                 num_of_actions += 1
+
+                curr_reward = reward_seq.pop(0)
+                print(f'Reward for action {action_names[action]}: {curr_reward}')
+                print("Actions and rewards left: ", list(zip(action_seq,reward_seq)))
+                if not any(x > curr_reward for x in reward_seq):
+                    print('No further action would increase the reward, moving on to next iteration...')
+                    train = True
+                    k = 0
+                    action_seq = []
+                    reward_seq = []
+
         CURR_TIME_SPENT = time.time() - RUN_START
 
     if N == 0:
