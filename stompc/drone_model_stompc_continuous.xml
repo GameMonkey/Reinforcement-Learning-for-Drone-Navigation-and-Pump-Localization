@@ -61,6 +61,7 @@ const double pump_exploration_reward = //TAG_pump_exploration_reward;
 const bool open = //TAG_open;
 
 double accum_reward = 0;
+double accum_penalty = 0;
 
 const double upper_range_pump_detection = //TAG_upper_pump_detection_range;
 const double lower_range_pump_detection = 0.55;
@@ -656,7 +657,7 @@ void turn_drone(double yaw_dx) {
     }
 
     calculate_reward();
-    accum_reward = accum_reward - turning_cost;
+    accum_penalty = accum_penalty - turning_cost;
 }</declaration>
 		<location id="id23" x="-59" y="-136">
 			<name x="-85" y="-119">waiting</name>
@@ -763,7 +764,7 @@ void move(double dir_x, double dir_y) {
     y = y + fint(((dir_y) / map_granularity));
 
     calculate_reward();
-    accum_reward = accum_reward - my_moving_cost;
+    accum_penalty = accum_penalty - my_moving_cost;
     
 }</declaration>
 		<location id="id33" x="238" y="110">
@@ -869,11 +870,7 @@ system DroneController, MovingActions, TurningActions;
 	<queries>
 		<option key="--diagnostic" value="-1"/>
 		<query>
-			<formula/>
-			<comment>// Learn startegy that minimize time to target</comment>
-		</query>
-		<query>
-			<formula>strategy FastSafe = minE(distance_to_goal) [&lt;=1000]  {DroneController.DescisionState} -&gt; {x,y,yaw}  : &lt;&gt; (DroneController.target || time &gt;= 4)</formula>
+			<formula>strategy opt = maxE(accum_reward - accum_penalty) [&lt;=21]{DroneController.DescisionState,yaw,x,y}-&gt;{time} : &lt;&gt; (DroneController.target || time &gt;= 20)</formula>
 			<comment/>
 		</query>
 		<query>
@@ -881,90 +878,7 @@ system DroneController, MovingActions, TurningActions;
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=1000;1]{x,y}: DroneController.target under FastSafe</formula>
-			<comment/>
-			<result outcome="success" type="interval" value="≥ 0.025 (95% CI)" timestamp="2024-02-19 10:25:32 +0100">
-				<option key="--diagnostic" value="-1"/>
-				<details>≥ 0.025 (95% CI)</details>
-				<plot title="Simulations (1)" xaxis="time" yaxis="value">
-					<series title="x" type="l" color="0xff0000" encoding="csv">0.0,0.0
-9.0,0.0
-9.0,1.0
-10.0,1.0
-10.0,2.0
-11.0,2.0
-11.0,3.0
-12.0,3.0
-12.0,4.0
-13.0,4.0
-13.0,5.0
-14.0,5.0
-14.0,6.0
-15.0,6.0
-					</series>
-					<series title="y" type="l" color="0x00ffff" encoding="csv">0.0,0.0
-0.0,1.0
-1.0,1.0
-1.0,2.0
-2.0,2.0
-2.0,3.0
-3.0,3.0
-3.0,4.0
-4.0,4.0
-4.0,5.0
-5.0,5.0
-5.0,6.0
-6.0,6.0
-6.0,7.0
-7.0,7.0
-7.0,8.0
-15.0,8.0
-					</series>
-					<comment/>
-				</plot>
-			</result>
-		</query>
-		<query>
-			<formula>saveStrategy("/home/sw9-bois/UPPAAL-TO-ROS-SIMULATION/uppaal_models/fast.json", FastSafe)</formula>
-			<comment/>
-			<option key="--diagnostic" value="-1"/>
-			<result outcome="success" type="quality" timestamp="2024-01-11 15:18:50 +0100">
-				<option key="--diagnostic" value="-1"/>
-			</result>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment>// Can TurningActions and MovingActions be out of the waiting state at the same time?</comment>
-		</query>
-		<query>
-			<formula>A[] !TurningActions.waiting &amp;&amp; !MovingActions.waiting</formula>
-			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-02-15 12:46:34 +0100">
-				<option key="--diagnostic" value="-1"/>
-			</result>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula>strategy FastSafeOLD = minE(time) [&lt;=1000]  {x,y} -&gt; {}  : &lt;&gt; DroneController.target</formula>
+			<formula>simulate [&lt;=100;1] {action,accum_reward} : (DroneController.target || time &gt;= 10) under opt</formula>
 			<comment/>
 		</query>
 	</queries>

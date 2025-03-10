@@ -57,13 +57,24 @@ class QueueLengthController(StrategoController):
 
         return simulate_string
 
+    def get_verbose_rewards(self, durations, rewards):
+        verbose_rewards = []
+        for duration in durations:
+            curr_reward = rewards.pop(0)
+            for _ in range(duration):
+                verbose_rewards.append(curr_reward)
+
+        return verbose_rewards
+
     def run(self, queryfile="", learning_args={}, verifyta_path="/home/sw9-bois/uppaal-5.0.0-linux64/bin/verifyta"):
         output = super().run(queryfile, learning_args, verifyta_path)
         # parse output
-   
+
         tpls = sutil.get_int_tuples(output)
         result = sutil.get_duration_action(tpls, max_time=1000)
         d,a = list(zip(*result))
-        #actions.send(a)
-        #actions.close()
-        return list(a)
+
+        actions = list(a[:10])
+        rewards = self.get_verbose_rewards(list(d[10:]), list(a[10:]))
+
+        return actions, rewards
