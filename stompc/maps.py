@@ -1,13 +1,15 @@
+import math
+
 from classes import Pump,MapConfig
 
 
-##################################
-### BASELINE MAP WITH ONE PUMP ###
-##################################
-def get_baseline_one_pump_config():
-    pump = Pump(-4.5,-7.2)
+###########################################
+### BASELINE MAP WITH ONE PUMP - ROOM A ###
+###########################################
+def get_baseline_one_pump_config(granularity=0.05):
+    pump = Pump(-4.0,-7.2)
     fake_pump = Pump(0,-8.5)
-    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=24480)
+    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=math.ceil((6/granularity)*(10.2/granularity)))
     return config
 
 
@@ -31,7 +33,7 @@ def get_baseline_big_room_config():
     pump3 = Pump(11.5, 0)
     fake_pump = Pump(5.5,14)
     
-    config = MapConfig(pumps=[pump, pump2, pump3], fake_pumps=[fake_pump], n_cells_in_area=24480)
+    config = MapConfig(pumps=[pump, pump2, pump3], fake_pumps=[fake_pump], n_cells_in_area=144400)
     return config
 
 
@@ -39,7 +41,7 @@ def get_baseline_tetris_room_config():
     pump = Pump(4,-4)
     fake_pump = Pump(0,-7)
 
-    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=144400)
+    config = MapConfig(pumps=[pump], fake_pumps=[fake_pump], n_cells_in_area=26928)
     return config
 
 

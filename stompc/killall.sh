@@ -1,0 +1,3 @@
+killall async_slam_toolbox_node 
+killall parameter_bridge
+killall pointcloud_to_laserscan_node

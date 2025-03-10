@@ -45,7 +45,7 @@ def kill_proc_tree(pid, sig=signal.SIGKILL, include_parent=True,
 
     return (gone, alive)
 
-file = 'experiments/training_time_runs.csv'
+file = 'experiments/nobug_Experiment_open=1_turningcost=20_movingcost=20_discoveryreward=10_pumpreward=1000_safetyrange=40cm_maxiter=3_rnb=default_gr=50_tr=300_rps=default_h=20.csv'
 
 def get_number_of_lines_csv (filename):
     number_of_lines = 0

@@ -62,7 +62,7 @@ const bool open = //TAG_open;
 
 double accum_reward = 0;
 
-const double upper_range_pump_detection = 0.75;
+const double upper_range_pump_detection = //TAG_upper_pump_detection_range;
 const double lower_range_pump_detection = 0.55;
 
 void calculate_reward() {
@@ -191,7 +191,7 @@ void calculate_reward() {
 
                     }
                     else if(map[uj][i] == 2) {
-                            if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
+                            if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
                             accum_reward = accum_reward + pump_exploration_reward;
                             map[uj][i] = 3;
                         }
@@ -218,7 +218,7 @@ void calculate_reward() {
                         i = upper_bound_x;                   
                     }
                     else if(map[lj][i] == 2) {
-                        if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
+                        if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
                             accum_reward = accum_reward + pump_exploration_reward;
                             map[lj][i] = 3;
                         }
@@ -348,7 +348,7 @@ void calculate_reward() {
                         i = upper_bound_x;
                     }
                     else if(map[uj][i] == 2) {
-                        if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
+                        if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
                             accum_reward = accum_reward + pump_exploration_reward;
                             map[uj][i] = 3;
                         }
@@ -375,7 +375,7 @@ void calculate_reward() {
                         i = upper_bound_x;
                     }
                     else if(map[lj][i] == 2) {
-                        if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
+                        if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
                             accum_reward = accum_reward + pump_exploration_reward;
                             map[lj][i] = 3;
                         }
