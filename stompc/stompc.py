@@ -146,6 +146,7 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
         try:
             state = activate_action(action)
         except Exception as e:
+            rclpy.shutdown()
             Popen("./killall.sh", shell=True).wait()
             raise e
         actions_taken.append(action_names[action])
@@ -170,6 +171,7 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
             try:
                 activate_action(action)
             except Exception as e:
+                rclpy.shutdown()
                 Popen("./killall.sh", shell=True).wait()
                 raise e
         else:
@@ -352,6 +354,7 @@ def run(template_file, query_file, verifyta_path):
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 print('No process with gz :thinking:')
                 pass
+            rclpy.shutdown()
             Popen("./killall.sh", shell=True).wait()
             raise Exception("The drone is not responsive")
         time.sleep(0.1)
@@ -577,7 +580,8 @@ def main():
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 print('No process with gz :thinking:')
                 pass
-
+            
+            rclpy.shutdown()
             raise Exception("The drone is stuck in liftoff")
 
         time.sleep(0.1)
@@ -622,6 +626,7 @@ def main():
             print('No process with gz :thinking:')
             pass
 
+        rclpy.shutdown()
         time.sleep(4)
 
         raise e
