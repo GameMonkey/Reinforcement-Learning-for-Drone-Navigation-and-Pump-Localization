@@ -146,7 +146,7 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
         try:
             state = activate_action(action)
         except Exception as e:
-            rclpy.shutdown()
+            rclpy.shutdown(uninstall_handlers=True)
             Popen("./killall.sh", shell=True).wait()
             raise e
         actions_taken.append(action_names[action])
@@ -171,7 +171,7 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
             try:
                 activate_action(action)
             except Exception as e:
-                rclpy.shutdown()
+                rclpy.shutdown(uninstall_handlers=True)
                 Popen("./killall.sh", shell=True).wait()
                 raise e
         else:
@@ -354,7 +354,7 @@ def run(template_file, query_file, verifyta_path):
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 print('No process with gz :thinking:')
                 pass
-            rclpy.shutdown()
+            rclpy.shutdown(uninstall_handlers=True)
             Popen("./killall.sh", shell=True).wait()
             raise Exception("The drone is not responsive")
         time.sleep(0.1)
@@ -562,7 +562,7 @@ def main():
             executor_odom.shutdown()
             executor_frame.shutdown()
 
-            rclpy.shutdown()
+            rclpy.shutdown(uninstall_handlers=True)
 
             pid = os.getpid()
             process = psutil.Process(pid)
@@ -580,8 +580,7 @@ def main():
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 print('No process with gz :thinking:')
                 pass
-            
-            rclpy.shutdown()
+
             raise Exception("The drone is stuck in liftoff")
 
         time.sleep(0.1)
@@ -626,7 +625,7 @@ def main():
             print('No process with gz :thinking:')
             pass
 
-        rclpy.shutdown()
+        rclpy.shutdown(uninstall_handlers=True)
         time.sleep(4)
 
         raise e
@@ -645,7 +644,7 @@ def main():
     executor_odom.shutdown()
     executor_frame.shutdown()
 
-    rclpy.shutdown() 
+    rclpy.shutdown(uninstall_handlers=True)
     time.sleep(4)
 
 
