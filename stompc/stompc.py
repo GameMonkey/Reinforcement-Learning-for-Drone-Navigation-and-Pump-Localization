@@ -558,9 +558,9 @@ def main():
             odom_publisher_instance.destroy_node()
             map_drone_tf_listener_instance.destroy_node()
 
-            executor_controller.shutdown()
-            executor_odom.shutdown()
-            executor_frame.shutdown()
+            executor_controller.shutdown(timeout_sec=-1)
+            executor_odom.shutdown(timeout_sec=-1)
+            executor_frame.shutdown(timeout_sec=-1)
 
             rclpy.shutdown(uninstall_handlers=True)
 
@@ -604,9 +604,9 @@ def main():
         odom_publisher_instance.destroy_node()
         map_drone_tf_listener_instance.destroy_node()
 
-        executor_controller.shutdown()
-        executor_odom.shutdown()
-        executor_frame.shutdown()
+        executor_controller.shutdown(timeout_sec=-1)
+        executor_odom.shutdown(timeout_sec=-1)
+        executor_frame.shutdown(timeout_sec=-1)
 
         pid = os.getpid()
         process = psutil.Process(pid)
@@ -640,9 +640,9 @@ def main():
     map_drone_tf_listener_instance.destroy_node()
 
 
-    executor_controller.shutdown()
-    executor_odom.shutdown()
-    executor_frame.shutdown()
+    executor_controller.shutdown(timeout_sec=-1)
+    executor_odom.shutdown(timeout_sec=-1)
+    executor_frame.shutdown(timeout_sec=-1)
 
     rclpy.shutdown(uninstall_handlers=True)
     time.sleep(4)
