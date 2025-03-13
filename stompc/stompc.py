@@ -573,11 +573,10 @@ def main():
 
     print("Starting launch")
     run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)
-    time.sleep(5)
+    time.sleep(10)
     print("Completed Launch")
 
 
-    time.sleep(30)
     try:
         pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, query_file, args.verifyta_path)
     except Exception as e:

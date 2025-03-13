@@ -4,20 +4,23 @@ from classes import State, DroneSpecs, TrainingParameters, MapConfig
 from utils import check_if_drone_can_see_pump, shield_action_bfs, turn_drone, shield_action
 import copy
 
+
 def bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig ):
     start = (state.map_drone_index_y, state.map_drone_index_x, [])
     g = state.map_granularity
-    rows, cols = len(state.map), len(state.map[0])
     queue = deque([start])
-    visited = [(start[0], start[1])]
+    rows, cols = len(state.map), len(state.map[0])
+    visited = [[False for _ in range(cols)] for _ in range(rows)]
+    visited[start[0]][start[1]] = True
     path_to_unknown_cell = None
 
-    DIRS = [(10,(math.floor(-0.5/g),0)), (11,(0,math.floor(-0.5/g))), (12,(math.floor(0.5/g),0)), (13,(0,math.floor(0.5/g))),
-            (20,(math.floor(-1/g),0)), (21,(0,math.floor(-1/g))), (13,(math.floor(1/g),0)), (23,(0,math.floor(1/g)))]
+    half_meter = int(0.5//g)
+    full_meter = int(1//g)
+    DIRS = [(10,(half_meter,0)), (11,(0,half_meter)), (12,(-half_meter,0)), (13,(0,-half_meter)),
+            (20,(full_meter,0)), (21,(0,full_meter)), (22,(-full_meter,0)), (23,(0,-full_meter))]
 
     while queue:
         r,c, curr_path = queue.popleft()
-
         curr_state = copy.deepcopy(state)
         curr_state.map_drone_index_y, curr_state.map_drone_index_x = r,c
 
@@ -30,20 +33,25 @@ def bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig ):
                     return curr_path
             curr_state.yaw = turn_drone(curr_state.yaw, -1.57)
 
+        #check if current path is unknown cell
+        if state.map[r][c] == -1 and path_to_unknown_cell is None:
+            print("Found unknown cell path: ", curr_path)
+            path_to_unknown_cell = curr_path
+
         #No poi was found, moving on.
-        for act, dr, dc in DIRS:
-            rr,cc = r+dr, c+dc
-            if shield_action(act, curr_state, drone_specs) and (rr,cc) not in visited:
-                queue.append((rr,cc, curr_path + [act]))
-                visited.append((rr,cc))
-            elif curr_state.map[rr][cc] == -1 and path_to_unknown_cell is None:
-                path_to_unknown_cell = curr_path + [act]
+        for act, (dr,dc) in DIRS:
+            rr,cc = r+dr,c+dc
+            if 0 <= rr < rows and 0 <= cc < cols:
+                if shield_action_bfs(act, curr_state, drone_specs) and not visited[rr][cc]:
+                    queue.append((rr,cc, [p for p in curr_path] + [act]))
+                    visited[rr][cc] = True
 
     if path_to_unknown_cell is not None:
+        print("Leads to unknown: ", path_to_unknown_cell)
         return path_to_unknown_cell
-    else:
-        print("didn't find a poi nor unknown cell, turning to explore more...")
-        return [4,4,4,4]
+
+    print("didn't find a poi nor unknown cell, turning to explore more...")
+    return [4,4,4,4]
 
 
 
