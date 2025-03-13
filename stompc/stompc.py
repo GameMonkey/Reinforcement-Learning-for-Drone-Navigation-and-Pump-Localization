@@ -12,7 +12,7 @@ import datetime
 import signal
 from subprocess import Popen, PIPE, DEVNULL
 from multiprocessing import Process, Queue, Pipe
-from bfs import get_path_from_bfs
+from bfs import get_path_from_bfs, bfs
 sys.path.insert(0, '../')
 from dotenv import load_dotenv
 load_dotenv()
@@ -71,6 +71,8 @@ args = ap.parse_args()
 #Experiment settings
 config_file = args.config_file
 global map_config
+global USE_BASELINE
+USE_BASELINE = False
 
 with open(config_file) as f:
     config = yaml.safe_load(f)
@@ -84,6 +86,10 @@ with open(config_file) as f:
         map_config = get_baseline_one_pump_config(granularity)
     else:
         map_config = get_baseline_one_pump_config()
+
+    if 'baseline' in config['experiment_setup']['run_settings'].keys():
+        USE_BASELINE = config['experiment_setup']['run_settings']['baseline']
+
 
 
     print(map_config.n_cells_in_area)
@@ -323,7 +329,6 @@ def run(template_file, query_file, verifyta_path):
     horizon = 10
     learning_time_accum = 0
 
-    use_baseline = False
     copy_action_seq = None
 # offboard_thread = threading.Thread(target=rclpy.spin, args=(offboard_control_instance,), daemon=True)
     run_drone_thread = threading.Thread(target=run_action_seq, args=([4, 4, 4, 4], 0, 0, 0), daemon=True)
@@ -404,38 +409,20 @@ def run(template_file, query_file, verifyta_path):
             train = False
             UPPAAL_START_TIME = time.time()
 
-            if use_baseline == False:
-                """parent_conn, child_conn = Pipe()
-                    t = Process(target=controller.run, args=(child_conn,query_file,learning_args,verifyta_path,))
-                    t.start()
-                    while t.is_alive():
-                        CURR_TIME_SPENT = time.time() - RUN_START
-                        if CURR_TIME_SPENT > TIME_PER_RUN:
-                            t.terminate()
-                            t.join()
-                            break
-                        if(len(action_seq) > 0):
-                            all_actions_were_activated = run_action_seq(action_seq)
-                            action_seq = []
-                            if(all_actions_were_activated == False):
-                                train = True
-                                t.terminate()
-                                t.join()
-                        else:
-                            run_action_seq([4,4,4,4])
-                        t.join(0.2)
-                    action_seq = list(parent_conn.recv())
-                    if(train == True):
-                        state = get_current_state()
-                        continue"""
+            if not USE_BASELINE:
                 controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
                 try:
                     action_seq, reward_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
+                    print("Got action+reward sequence from STRATEGO: ", list(zip(action_seq,reward_seq)))
                 except Exception:
                     Popen("./killall.sh", shell=True).wait()
                 os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
             else:
-                action_seq = get_path_from_bfs(state, drone_specs, map_config)
+                try:
+                    action_seq = bfs(state, drone_specs, map_config)
+                    print("Got action sequence from BFS approach: ", action_seq)
+                except Exception:
+                    Popen("./killall.sh", shell=True).wait()
 
             copy_action_seq = [x for x in action_seq]
 
@@ -446,7 +433,6 @@ def run(template_file, query_file, verifyta_path):
             learning_time = UPPAAL_END_TIME-UPPAAL_START_TIME
             learning_time_accum += learning_time
             print("Working on iteration {} took: {:0.4f} seconds, of that training took: {:0.4f} seconds.".format(N, iteration_time, learning_time))
-            print("Got action+reward sequence from STRATEGO: ", list(zip(action_seq,reward_seq)))
 
             with open("sequence_{}.txt".format(N), "w") as f:
                 f.write(str([action_names[a] for a in action_seq]))
@@ -456,7 +442,7 @@ def run(template_file, query_file, verifyta_path):
             print([action_names[a] for a in action_seq])
 
         k=k+1
-        if(len(action_seq) == 0):
+        if len(action_seq) == 0:
             train = True
             k = 0
         else:
@@ -464,7 +450,7 @@ def run(template_file, query_file, verifyta_path):
             action_was_activated = activate_action_with_shield(action, k, N, copy_action_seq)
             state = get_current_state()
 
-            if action_was_activated == False:
+            if not action_was_activated:
                 train = True
                 k = 0
                 action_seq = []
@@ -475,15 +461,16 @@ def run(template_file, query_file, verifyta_path):
             if action_was_activated:
                 num_of_actions += 1
 
-                curr_reward = reward_seq.pop(0)
-                print(f'Reward for action {action_names[action]}: {curr_reward}')
-                print("Actions and rewards left: ", list(zip(action_seq,reward_seq)))
-                if not any(x > curr_reward for x in reward_seq):
-                    print('No further action would increase the reward, moving on to next iteration...')
-                    train = True
-                    k = 0
-                    action_seq = []
-                    reward_seq = []
+                if not USE_BASELINE:
+                    curr_reward = reward_seq.pop(0)
+                    print(f'Reward for action {action_names[action]}: {curr_reward}')
+                    print("Actions and rewards left: ", list(zip(action_seq,reward_seq)))
+                    if not any(x > curr_reward for x in reward_seq):
+                        print('No further action would increase the reward, moving on to next iteration...')
+                        train = True
+                        k = 0
+                        action_seq = []
+                        reward_seq = []
 
         CURR_TIME_SPENT = time.time() - RUN_START
 

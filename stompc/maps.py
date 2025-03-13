@@ -16,24 +16,24 @@ def get_baseline_one_pump_config(granularity=0.05):
 ##################################
 ### CYLINEDER MAP WITH 3 PUMPS ###
 ##################################
-def get_baseline_cylinder_room_config():
+def get_baseline_cylinder_room_config(granularity=0.05):
     pump1 = Pump(0,-3.5)
     pump2 = Pump(-4.5,2.3)
     pump3 = Pump(-5.5,-5.2)
 
-    config = MapConfig(pumps=[pump1,pump2,pump3], fake_pumps=[], n_cells_in_area=31415)
+    config = MapConfig(pumps=[pump1,pump2,pump3], fake_pumps=[], n_cells_in_area=round((8.86214**2)/(granularity**2)))
     return config
 
 ##################################
 ### BASELINE MAP WITH ONE PUMP ###
 ##################################
-def get_baseline_big_room_config():
+def get_baseline_big_room_config(granularity=0.05):
     pump = Pump(0,14)
     pump2 = Pump(11.5, 14)
     pump3 = Pump(11.5, 0)
     fake_pump = Pump(5.5,14)
     
-    config = MapConfig(pumps=[pump, pump2, pump3], fake_pumps=[fake_pump], n_cells_in_area=144400)
+    config = MapConfig(pumps=[pump, pump2, pump3], fake_pumps=[fake_pump], n_cells_in_area=round((19**2)/(granularity**2)))
     return config
 
 

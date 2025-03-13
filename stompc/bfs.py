@@ -1,8 +1,53 @@
+import math
 from collections import deque
 from classes import State, DroneSpecs, TrainingParameters, MapConfig
-from utils import check_if_drone_can_see_pump, shield_action_bfs, turn_drone
+from utils import check_if_drone_can_see_pump, shield_action_bfs, turn_drone, shield_action
 import copy
-def get_path_from_bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig ):
+
+def bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig ):
+    start = (state.map_drone_index_y, state.map_drone_index_x, [])
+    g = state.map_granularity
+    rows, cols = len(state.map), len(state.map[0])
+    queue = deque([start])
+    visited = [(start[0], start[1])]
+    path_to_unknown_cell = None
+
+    DIRS = [(10,(math.floor(-0.5/g),0)), (11,(0,math.floor(-0.5/g))), (12,(math.floor(0.5/g),0)), (13,(0,math.floor(0.5/g))),
+            (20,(math.floor(-1/g),0)), (21,(0,math.floor(-1/g))), (13,(math.floor(1/g),0)), (23,(0,math.floor(1/g)))]
+
+    while queue:
+        r,c, curr_path = queue.popleft()
+
+        curr_state = copy.deepcopy(state)
+        curr_state.map_drone_index_y, curr_state.map_drone_index_x = r,c
+
+        #check if we can see a poi and return the path if we can
+        for i in range(4):
+            for pump in map_config.pumps + map_config.fake_pumps:
+                if not pump.has_been_discovered and check_if_drone_can_see_pump(curr_state,pump,drone_specs):
+                    for j in range(0, i):
+                        curr_path.append(4)
+                    return curr_path
+            curr_state.yaw = turn_drone(curr_state.yaw, -1.57)
+
+        #No poi was found, moving on.
+        for act, dr, dc in DIRS:
+            rr,cc = r+dr, c+dc
+            if shield_action(act, curr_state, drone_specs) and (rr,cc) not in visited:
+                queue.append((rr,cc, curr_path + [act]))
+                visited.append((rr,cc))
+            elif curr_state.map[rr][cc] == -1 and path_to_unknown_cell is None:
+                path_to_unknown_cell = curr_path + [act]
+
+    if path_to_unknown_cell is not None:
+        return path_to_unknown_cell
+    else:
+        print("didn't find a poi nor unknown cell, turning to explore more...")
+        return [4,4,4,4]
+
+
+
+def get_path_from_bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig):
     start = (state.map_drone_index_y, state.map_drone_index_x)
     rows, cols = len(state.map), len(state.map[0])
     queue = deque([(state.map_drone_index_y, state.map_drone_index_x, -1)])
