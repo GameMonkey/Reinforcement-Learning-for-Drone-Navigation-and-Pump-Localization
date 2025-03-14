@@ -2,7 +2,7 @@ experiment_setup:
 
   #run settings #1200 is 20 mins
   run_settings:
-    world: "Tetris" #takes the values: Default, Tetris, Large, Cylinder
+    world: "Default" #takes the values: Default, Tetris, Large, Cylinder
     time_per_run: 600
     granularity: 0.2 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
     baseline: False

@@ -83,12 +83,6 @@ with open(config_file) as f:
     training_params = config['experiment_setup']['training_params']
     TIME_PER_RUN = config['experiment_setup']['run_settings']['time_per_run'] # time allowed in a run in seconds.
 
-    if 'granularity' in config['experiment_setup']['run_settings'].keys():
-        granularity = config['experiment_setup']['run_settings']['granularity']
-        map_config = get_baseline_one_pump_config(granularity)
-    else:
-        map_config = get_baseline_one_pump_config()
-
     if 'baseline' in config['experiment_setup']['run_settings'].keys():
         USE_BASELINE = config['experiment_setup']['run_settings']['baseline']
 
@@ -96,6 +90,32 @@ with open(config_file) as f:
         HORIZON = config['experiment_setup']['run_settings']['horizon']
 
     WORLD_TO_USE = config['experiment_setup']['run_settings']['world']
+
+    match WORLD_TO_USE:
+        case "Tetris":
+            if 'granularity' in config['experiment_setup']['run_settings'].keys():
+                granularity = config['experiment_setup']['run_settings']['granularity']
+                map_config = get_baseline_tetris_room_config(granularity)
+            else:
+                map_config = get_baseline_tetris_room_config()
+        case "Large":
+            if 'granularity' in config['experiment_setup']['run_settings'].keys():
+                granularity = config['experiment_setup']['run_settings']['granularity']
+                map_config = get_baseline_big_room_config(granularity)
+            else:
+                map_config = get_baseline_big_room_config()
+        case "Cylinder":
+            if 'granularity' in config['experiment_setup']['run_settings'].keys():
+                granularity = config['experiment_setup']['run_settings']['granularity']
+                map_config = get_baseline_cylinder_room_config(granularity)
+            else:
+                map_config = get_baseline_cylinder_room_config()
+        case "Default" | _:
+            if 'granularity' in config['experiment_setup']['run_settings'].keys():
+                granularity = config['experiment_setup']['run_settings']['granularity']
+                map_config = get_baseline_one_pump_config(granularity)
+            else:
+                map_config = get_baseline_one_pump_config()
 
 
     print(map_config.n_cells_in_area)
@@ -503,7 +523,7 @@ def main():
     global WORLD_TO_USE
     RUN_START = time.time()
     init_rclpy(ENV_DOMAIN)
-    run_gz(GZ_PATH=ENV_GZ_PATH)
+    run_gz(GZ_PATH=ENV_GZ_PATH, room_name=WORLD_TO_USE)
     time.sleep(30)
     run_xrce_agent()
     time.sleep(5)
@@ -588,7 +608,7 @@ def main():
 
     print("Starting launch")
     run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)
-    time.sleep(10)
+    time.sleep(25)
     print("Completed Launch")
 
 
