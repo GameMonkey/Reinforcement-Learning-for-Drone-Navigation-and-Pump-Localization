@@ -47,7 +47,6 @@ def bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig ):
                     visited[rr][cc] = True
 
     if path_to_unknown_cell is not None:
-        print("Leads to unknown: ", path_to_unknown_cell)
         return path_to_unknown_cell
 
     print("didn't find a poi nor unknown cell, turning to explore more...")

@@ -190,7 +190,7 @@ def shield_action_bfs(action: int, state:State, drone_specs: DroneSpecs) -> bool
     if(action > 14):
         step_length = 1.0
     else:
-        step_length = 0.25
+        step_length = 0.5
     N_cells_in_dir = int(step_length / state.map_granularity)
     drone_cells_to_cover = int((drone_specs.drone_diameter) / state.map_granularity)
     safety_range_cells = int(drone_specs.safety_range / state.map_granularity)
