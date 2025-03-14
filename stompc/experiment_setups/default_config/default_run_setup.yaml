@@ -2,9 +2,11 @@ experiment_setup:
 
   #run settings #1200 is 20 mins
   run_settings:
-    world: "baseline_model_one_pump"
+    world: "Tetris" #takes the values: Default, Tetris, Large, Cylinder
     time_per_run: 600
-    granularity: 0.05 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
+    granularity: 0.2 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
+    baseline: False
+    horizon: 25
 
   #UPPAAL learning parameters (Implemented so that these keys are also the keys in the code. It has to be "-" in these names since that is that verifity expects.)
   uppaal_params:

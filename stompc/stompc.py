@@ -73,6 +73,8 @@ config_file = args.config_file
 global map_config
 global USE_BASELINE
 USE_BASELINE = False
+global HORIZON
+HORIZON = 20
 
 with open(config_file) as f:
     config = yaml.safe_load(f)
@@ -90,6 +92,10 @@ with open(config_file) as f:
     if 'baseline' in config['experiment_setup']['run_settings'].keys():
         USE_BASELINE = config['experiment_setup']['run_settings']['baseline']
 
+    if 'horizon' in config['experiment_setup']['run_settings'].keys():
+        HORIZON = config['experiment_setup']['run_settings']['horizon']
+
+    WORLD_TO_USE = config['experiment_setup']['run_settings']['world']
 
 
     print(map_config.n_cells_in_area)
@@ -154,7 +160,6 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
         except Exception as e:
             Popen("./killall.sh", shell=True).wait()
             raise e
-        actions_taken.append(action_names[action])
     else:
         print("shielded action: {}".format(action))
         print("shielded action: {}".format(action_names[action]))
@@ -320,13 +325,13 @@ def run(template_file, query_file, verifyta_path):
                                    state_vars=["DroneController.DescisionState", "yaw", "x", "y"],
                                    point_vars=["time"],
                                    #point_vars=["yaw", "x", "y"],
-                                   observables=["action", "accum_reward"],)
+                                   observables=["action", "accum_reward"],
+                                   horizon=HORIZON)
 
 
     k = 0
     actions_left_to_trigger_learning = 3
     train = True
-    horizon = 10
     learning_time_accum = 0
 
     copy_action_seq = None
@@ -373,7 +378,7 @@ def run(template_file, query_file, verifyta_path):
     while not (all(pump.has_been_discovered for pump in map_config.pumps + map_config.fake_pumps) and measure_coverage(get_current_state(), map_config) > 75) and CURR_TIME_SPENT < TIME_PER_RUN:
         K_START_TIME = time.time()
 
-        if train == True or k % horizon == 0:
+        if train == True or k % HORIZON == 0:
             N = N + 1
             print("Started sleeping for 5 sec")
             time.sleep(5)
@@ -412,11 +417,11 @@ def run(template_file, query_file, verifyta_path):
             if not USE_BASELINE:
                 controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
                 try:
-                    action_seq, reward_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args)
+                    action_seq, reward_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args, horizon=HORIZON)
                     print("Got action+reward sequence from STRATEGO: ", list(zip(action_seq,reward_seq)))
+                    os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
                 except Exception:
                     Popen("./killall.sh", shell=True).wait()
-                os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
             else:
                 try:
                     action_seq = bfs(state, drone_specs, map_config)
@@ -434,9 +439,14 @@ def run(template_file, query_file, verifyta_path):
             learning_time_accum += learning_time
             print("Working on iteration {} took: {:0.4f} seconds, of that training took: {:0.4f} seconds.".format(N, iteration_time, learning_time))
 
-            with open("sequence_{}.txt".format(N), "w") as f:
-                f.write(str([action_names[a] for a in action_seq]))
-            os.rename("./sequence_{}.txt".format(N), "./" + res_folder + "/sequence_{}.txt".format(N))
+            if not USE_BASELINE:
+                with open("sequence_{}.csv".format(N), "w") as f:
+                    f.write("\n".join([str((action_names[a],r)) for a,r in list(zip(action_seq,reward_seq))]))
+                os.rename("./sequence_{}.csv".format(N), "./" + res_folder + "/sequence_{}.csv".format(N))
+            else:
+                with open("sequence_{}.csv".format(N), "w") as f:
+                    f.write("\n".join([action_names[a] for a in action_seq]))
+                os.rename("./sequence_{}.csv".format(N), "./" + res_folder + "/sequence_{}.csv".format(N))
 
             print("Action sequence by name:")
             print([action_names[a] for a in action_seq])
@@ -463,6 +473,8 @@ def run(template_file, query_file, verifyta_path):
 
                 if not USE_BASELINE:
                     curr_reward = reward_seq.pop(0)
+                    actions_taken.append((action_names[action],curr_reward))
+
                     print(f'Reward for action {action_names[action]}: {curr_reward}')
                     print("Actions and rewards left: ", list(zip(action_seq,reward_seq)))
                     if not any(x > curr_reward for x in reward_seq):
@@ -471,6 +483,8 @@ def run(template_file, query_file, verifyta_path):
                         k = 0
                         action_seq = []
                         reward_seq = []
+                else:
+                    actions_taken.append(action_names[action])
 
         CURR_TIME_SPENT = time.time() - RUN_START
 
@@ -486,6 +500,7 @@ def main():
     global map_drone_tf_listener_instance
     global RUN_START
     global args
+    global WORLD_TO_USE
     RUN_START = time.time()
     init_rclpy(ENV_DOMAIN)
     run_gz(GZ_PATH=ENV_GZ_PATH)
@@ -665,7 +680,7 @@ if __name__ == "__main__":
                   "./" + res_folder + "/" + file_name)
 
     with open( "./" + res_folder + "/actions_taken.csv", "w") as f:
-        f.write("\n".join(actions_taken))
+        f.write("\n".join([str(a) for a in actions_taken]))
 
 
     pid = os.getpid()

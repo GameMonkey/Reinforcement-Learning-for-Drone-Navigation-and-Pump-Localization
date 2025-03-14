@@ -40,7 +40,7 @@ if (( "${#config_files[@]}" )); then
         printf "\n\n\n"
     done
 else
-    echo "No YAML files found in $config_dir. Running stompc.py without -cfg."
+    echo "No YAML files found in $cfg_dir. Running stompc.py with the default config file."
 
     for i in $(eval echo {1..$1}); do
         echo "Run $i with default config"

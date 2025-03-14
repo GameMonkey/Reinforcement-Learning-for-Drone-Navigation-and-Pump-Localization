@@ -20,10 +20,10 @@ class QueueLengthController(StrategoController):
             sutil.insert_to_modelfile(
                 self.simulation_file, tag, value)
             
-    def generate_query_file(self, optimize, learning_param, state_vars, point_vars, observables):
-        strategy = self.generate_strategy_query(optimize, learning_param, state_vars, point_vars)
+    def generate_query_file(self, optimize, learning_param, state_vars, point_vars, observables, horizon):
+        strategy = self.generate_strategy_query(optimize, learning_param, state_vars, point_vars, horizon)
         save_strategy = self.generate_store_strategy_query()
-        simulate = self.generate_simulate_query(observables)
+        simulate = self.generate_simulate_query(observables, horizon)
         f = open("query.q", "w")
         f.write(strategy +"\n \n" + save_strategy + "\n \n" + simulate)
         f.close()
@@ -31,13 +31,10 @@ class QueueLengthController(StrategoController):
     def generate_store_strategy_query(self):
         return 'saveStrategy("./strategy.json", opt)'
 
-    def generate_strategy_query(self,optimize, learning_param, state_vars, point_vars):
+    def generate_strategy_query(self,optimize, learning_param, state_vars, point_vars, horizon):
+        stop_condition = "(DroneController.target || time >= {})".format(horizon)
 
-        time_to_reach_stop_condition = "21"
-        
-        stop_condition = "(DroneController.target || time >= 20)"
-
-        strategy_string = "strategy opt = {}({}) [<={}]".format(optimize, learning_param, time_to_reach_stop_condition)
+        strategy_string = "strategy opt = {}({}) [<={}]".format(optimize, learning_param, horizon)
         strategy_string += "{" + ",".join(state_vars) + "}"
         strategy_string += "->"
         strategy_string += "{" + ",".join(point_vars) + "}"
@@ -46,11 +43,10 @@ class QueueLengthController(StrategoController):
         return strategy_string
     
 
-    def generate_simulate_query(self, observables) :
-        simulate_length = "100"
-        stop_condition = "(DroneController.target || time >= 10)"
+    def generate_simulate_query(self, observables, horizon) :
+        stop_condition = "(DroneController.target || time >= {})".format(horizon)
 
-        simulate_string = "simulate [<={};1]".format(simulate_length)
+        simulate_string = "simulate [<={};1]".format(horizon)
         simulate_string += " {" + ",".join(observables) + "}"
         simulate_string += " : " + stop_condition
         simulate_string += " under opt"
@@ -66,7 +62,7 @@ class QueueLengthController(StrategoController):
 
         return verbose_rewards
 
-    def run(self, queryfile="", learning_args={}, verifyta_path="/home/sw9-bois/uppaal-5.0.0-linux64/bin/verifyta"):
+    def run(self, queryfile="", learning_args={}, verifyta_path="/home/sw9-bois/uppaal-5.0.0-linux64/bin/verifyta", horizon=20):
         output = super().run(queryfile, learning_args, verifyta_path)
         # parse output
 
@@ -74,7 +70,7 @@ class QueueLengthController(StrategoController):
         result = sutil.get_duration_action(tpls, max_time=1000)
         d,a = list(zip(*result))
 
-        actions = list(a[:10])
-        rewards = self.get_verbose_rewards(list(d[10:]), list(a[10:]))
+        actions = list(a[:horizon])
+        rewards = self.get_verbose_rewards(list(d[horizon:]), list(a[horizon:]))
 
         return actions, rewards
