@@ -20,10 +20,10 @@ experiment_setup:
   #Training parameters
   training_params:
     open: 1
-    turning_cost: 0.0
-    moving_cost: 0.0
+    turning_cost: 10.0
+    moving_cost: 10.0
     visited_cost: 200.0
-    discovery_reward: 1.0
+    discovery_reward: 100.0
     pump_exploration_reward: 10000000.0
 
   #Drone specs

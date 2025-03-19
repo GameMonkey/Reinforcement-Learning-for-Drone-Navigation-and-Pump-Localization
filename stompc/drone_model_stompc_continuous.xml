@@ -126,14 +126,14 @@ void calculate_reward() {
                     }
                     else if(map[j][ui] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
                             map[j][ui] = 3;
 
                         }
                         
                     }
                     else if(map[j][ui] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
                         if(!open){
                             map[j][ui] = 100;
                             j = upper_bound_y;
@@ -154,12 +154,12 @@ void calculate_reward() {
                     }
                     else if(map[j][li] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
                             map[j][li] = 3;
                         }
                     }
                     else if(map[j][li] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
                         if(!open){
                             map[j][li] = 100;
                             j = upper_bound_y;
@@ -206,13 +206,13 @@ void calculate_reward() {
                     }
                     else if(map[uj][i] == 2) {
                             if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
                             map[uj][i] = 3;
                         }
                         
                     }
                     else if(map[uj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
                         if(!open){
                             map[uj][i] = 100;
                             i = upper_bound_x;
@@ -233,13 +233,13 @@ void calculate_reward() {
                     }
                     else if(map[lj][i] == 2) {
                         if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
                             map[lj][i] = 3;
                         }
                         
                     }
                     else if(map[lj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
                         if(!open){
                             map[lj][i] = 100;
                             i = upper_bound_x;
@@ -284,13 +284,13 @@ void calculate_reward() {
                     }
                     else if(map[j][ui] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
                             map[j][ui] = 3;
                          }
                         
                     }
                     else if(map[j][ui] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
                         if(!open){
                             map[j][ui] = 100;
                             j = upper_bound_y;
@@ -311,13 +311,13 @@ void calculate_reward() {
                     }
                     else if(map[j][li] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
                             map[j][li] = 3;
                         }
                         
                     }
                     else if(map[j][li] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
                         if(!open){
                             map[j][li] = 100;
                             j = upper_bound_y;
@@ -669,7 +669,6 @@ void turn_drone(double yaw_dx) {
         yaw = yaw + yaw_dx;
     }
 
-    calculate_reward();
     accum_penalty = accum_penalty - turning_cost;
     actions_taken += 1;
 
@@ -680,6 +679,8 @@ void turn_drone(double yaw_dx) {
         visited[actions_taken][1] = y;
         visited[actions_taken][2] = yaw;
     }
+
+    calculate_reward();
 }</declaration>
 		<location id="id23" x="-59" y="-136">
 			<name x="-85" y="-119">waiting</name>
@@ -785,7 +786,6 @@ void move(double dir_x, double dir_y) {
     x = x + fint(((dir_x) / map_granularity));
     y = y + fint(((dir_y) / map_granularity));
 
-    calculate_reward();
     accum_penalty = accum_penalty - my_moving_cost;
     actions_taken += 1;
 
@@ -797,6 +797,8 @@ void move(double dir_x, double dir_y) {
         visited[actions_taken][1] = y;
         visited[actions_taken][2] = yaw;
     }
+
+    calculate_reward();
 }</declaration>
 		<location id="id33" x="238" y="110">
 			<name x="228" y="76">waiting</name>
