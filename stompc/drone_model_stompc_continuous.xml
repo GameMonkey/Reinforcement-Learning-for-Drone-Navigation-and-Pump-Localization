@@ -126,14 +126,14 @@ void calculate_reward() {
                     }
                     else if(map[j][ui] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][ui] = 3;
 
                         }
                         
                     }
                     else if(map[j][ui] == -1) {
-                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][ui] = 100;
                             j = upper_bound_y;
@@ -154,12 +154,12 @@ void calculate_reward() {
                     }
                     else if(map[j][li] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][li] = 3;
                         }
                     }
                     else if(map[j][li] == -1) {
-                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][li] = 100;
                             j = upper_bound_y;
@@ -206,13 +206,13 @@ void calculate_reward() {
                     }
                     else if(map[uj][i] == 2) {
                             if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[uj][i] = 3;
                         }
                         
                     }
                     else if(map[uj][i] == -1) {
-                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[uj][i] = 100;
                             i = upper_bound_x;
@@ -233,13 +233,13 @@ void calculate_reward() {
                     }
                     else if(map[lj][i] == 2) {
                         if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[lj][i] = 3;
                         }
                         
                     }
                     else if(map[lj][i] == -1) {
-                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[lj][i] = 100;
                             i = upper_bound_x;
@@ -284,13 +284,13 @@ void calculate_reward() {
                     }
                     else if(map[j][ui] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][ui] = 3;
                          }
                         
                     }
                     else if(map[j][ui] == -1) {
-                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][ui] = 100;
                             j = upper_bound_y;
@@ -311,13 +311,13 @@ void calculate_reward() {
                     }
                     else if(map[j][li] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + (pump_exploration_reward * (1 / actions_taken));
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][li] = 3;
                         }
                         
                     }
                     else if(map[j][li] == -1) {
-                        accum_reward = accum_reward + (discovery_reward * (1 / actions_taken));
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][li] = 100;
                             j = upper_bound_y;
@@ -363,13 +363,13 @@ void calculate_reward() {
                     }
                     else if(map[uj][i] == 2) {
                         if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[uj][i] = 3;
                         }
                         
                     }
                     else if(map[uj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[uj][i] = 100;
                             i = upper_bound_x;
@@ -390,13 +390,13 @@ void calculate_reward() {
                     }
                     else if(map[lj][i] == 2) {
                         if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[lj][i] = 3;
                         }
                         
                     }
                     else if(map[lj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[lj][i] = 100;
                             i = upper_bound_x;
