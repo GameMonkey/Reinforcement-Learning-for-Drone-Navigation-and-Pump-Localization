@@ -759,19 +759,14 @@ turn_drone(half_PI_left)</label>
 clock c;
 
 void move(double dir_x, double dir_y) { 
-    double my_moving_cost = moving_cost;
     if(dir_x == 1.0) {
         dir_x = 0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }else if(dir_x == -1.0) {
         dir_x = -0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }else if(dir_y == 1.0) {
         dir_y = 0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }else if(dir_y == -1.0) {
         dir_y = -0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }
 
     if(dir_x == 2.0) {    
@@ -786,7 +781,7 @@ void move(double dir_x, double dir_y) {
     x = x + fint(((dir_x) / map_granularity));
     y = y + fint(((dir_y) / map_granularity));
 
-    accum_penalty = accum_penalty - my_moving_cost;
+    accum_penalty = accum_penalty;
     actions_taken += 1;
 
 
