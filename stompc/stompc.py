@@ -468,6 +468,10 @@ def run(template_file, query_file, verifyta_path):
                 try:
                     action_seq = bfs(state, drone_specs, map_config)
                     print("Got action sequence from BFS approach: ", action_seq)
+                    if len(action_seq) == 0:
+                        print("Got empty path from BFS, it might be thinking it can see the pump in it's current location, but it needs to turn.")
+                        print("Applies four turning actions")
+                        action_seq = [4,4,4,4]
                 except Exception:
                     print("An exception might have been raised during the baseline search, killing everything and going again.")
                     Popen("./killall.sh", shell=True).wait()
