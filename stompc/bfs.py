@@ -25,13 +25,16 @@ def bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig ):
         curr_state.map_drone_index_y, curr_state.map_drone_index_x = r,c
 
         #check if we can see a poi and return the path if we can
-        for i in range(4):
-            for pump in map_config.pumps + map_config.fake_pumps:
-                if not pump.has_been_discovered and check_if_drone_can_see_pump(curr_state,pump,drone_specs):
-                    for j in range(0, i):
-                        curr_path.append(4)
-                    return curr_path
-            curr_state.yaw = turn_drone(curr_state.yaw, -1.57)
+
+        if state.map[r][c] != -1:
+            for i in range(4):
+                for pump in map_config.pumps + map_config.fake_pumps:
+                    if not pump.has_been_discovered and check_if_drone_can_see_pump(curr_state,pump,drone_specs):
+                        for j in range(0, i):
+                            curr_path.append(4)
+                        print("Found a pump path")
+                        return curr_path
+                curr_state.yaw = turn_drone(curr_state.yaw, -1.57)
 
         #check if current path is unknown cell
         if state.map[r][c] == -1 and path_to_unknown_cell is None:

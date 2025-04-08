@@ -128,6 +128,7 @@ with open(config_file) as f:
     training_parameters = TrainingParameters(open=training_params['open'],
                                              turning_cost=training_params['turning_cost'],
                                              moving_cost=training_params['moving_cost'],
+                                             visited_cost=training_params['visited_cost'],
                                              discovery_reward=training_params['discovery_reward'],
                                              pump_exploration_reward=training_params['pump_exploration_reward'],)
     learning_args = {}
@@ -328,7 +329,23 @@ def run(template_file, query_file, verifyta_path):
     print("running uppaal")
     controller = QueueLengthController(
         templatefile=template_file,
-        state_names=["x", "y", "yaw", "width_map","height_map", "map", "granularity_map", "open", "discovery_reward", "turning_cost", "moving_cost", "drone_diameter", "safety_range", "range_laser", "laser_range_diameter", "pump_exploration_reward", "upper_pump_detection_range"])
+        state_names=["x", "y", "yaw",
+                     "width_map","height_map",
+                     "map",
+                     "granularity_map",
+                     "open",
+                     "discovery_reward",
+                     "turning_cost",
+                     "moving_cost",
+                     "drone_diameter",
+                     "safety_range",
+                     "range_laser",
+                     "laser_range_diameter",
+                     "pump_exploration_reward",
+                     "upper_pump_detection_range",
+                     "horizon",
+                     "visited",
+                     "visited_cost"])
     # initial drone state
     x = float(vehicle_odometry.get_drone_pos_x())
     y = float(vehicle_odometry.get_drone_pos_y())
@@ -428,7 +445,10 @@ def run(template_file, query_file, verifyta_path):
                 "safety_range": drone_specs.safety_range,
                 "range_laser": drone_specs.laser_range,
                 "laser_range_diameter": drone_specs.laser_range_diameter,
-                "upper_pump_detection_range": drone_specs.upper_pump_detection_range
+                "upper_pump_detection_range": drone_specs.upper_pump_detection_range,
+                "horizon": HORIZON+2,
+                "visited": build_uppaal_2d_array_string("double", "visited", [[state.map_drone_index_x, state.map_drone_index_y, state.yaw] if i == 0 else [0,0,0] for i in range(HORIZON + 2)]),
+                "visited_cost": training_parameters.visited_cost,
             }
             controller.insert_state(uppaal_state)
             train = False
@@ -440,13 +460,20 @@ def run(template_file, query_file, verifyta_path):
                     action_seq, reward_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args, horizon=HORIZON)
                     print("Got action+reward sequence from STRATEGO: ", list(zip(action_seq,reward_seq)))
                     os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
-                except Exception:
+                except Exception as e:
+                    print("UPPAAL might have raised an exception, killing everything and going again.")
+                    print(e)
                     Popen("./killall.sh", shell=True).wait()
             else:
                 try:
                     action_seq = bfs(state, drone_specs, map_config)
                     print("Got action sequence from BFS approach: ", action_seq)
+                    if len(action_seq) == 0:
+                        print("Got empty path from BFS, it might be thinking it can see the pump in it's current location, but it needs to turn.")
+                        print("Applies four turning actions")
+                        action_seq = [4,4,4,4]
                 except Exception:
+                    print("An exception might have been raised during the baseline search, killing everything and going again.")
                     Popen("./killall.sh", shell=True).wait()
 
             copy_action_seq = [x for x in action_seq]
@@ -608,7 +635,7 @@ def main():
 
     print("Starting launch")
     run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)
-    time.sleep(25)
+    time.sleep(10)
     print("Completed Launch")
 
 
