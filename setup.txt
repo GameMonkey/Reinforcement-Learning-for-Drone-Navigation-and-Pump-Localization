@@ -1,0 +1,134 @@
+# To run stompc code
+source /opt/ros/humble/setup.bash #not needed if both of these source are in .bashrc
+source ~/ws/install/local_setup.bash
+cd ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc
+
+# To run rviz2
+source /opt/ros/humble/setup.bash
+rviz2 -d ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/rviz2_cfg/basic_cfg.rviz
+
+# To change slam params, open the following file with sudo
+/opt/ros/humble/share/slam_toolbox/config/mapper_params_online_async.yaml
+
+
+# Installation of ros, gz and all else.
+
+sudo apt-get update
+sudo apt-get upgrade -y
+
+
+sudo apt install git emacs -y
+
+# python dependencies
+sudo apt install python3-pip -y
+pip3 install "numpy==1.26.4"
+pip3 install "setuptools==70.0.0"
+
+
+# ROS2
+sudo apt install software-properties-common
+sudo add-apt-repository universe
+
+sudo apt update && sudo apt install curl -y
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+sudo apt-get update
+
+sudo apt install ros-humble-desktop -y
+sudo apt install ros-dev-tools -y
+
+sudo apt install python3-colcon-common-extensions -y
+
+## Install Gazebo
+sudo apt-get install curl lsb-release gnupg
+sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+sudo apt-get update
+sudo apt-get install gz-garden -y
+
+
+source /opt/ros/humble/setup.bash
+
+
+
+pip3 install strategoutil
+
+## Install PX4 without a simulator as we have manually installed Harmomic.
+cd
+git clone https://github.com/PX4/PX4-Autopilot.git
+cd PX4-Autopilot
+git reset --hard e35380d6ae8196ce658b5059388593ec0c3b63d2
+git submodule update --recursive
+cd
+bash ./PX4-Autopilot/Tools/setup/ubuntu.sh --no-sim-tools
+cd PX4-Autopilot/
+make px4_sitl
+
+cd 
+git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git -b 57d086216d01ec43121845d385894a25987f8a2c
+cd Micro-XRCE-DDS-Agent
+mkdir build
+## Change version of fast-dds to 2.12.2 in CMakeList.txt
+cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig /usr/local/lib/
+
+
+## Workspace 
+cd 
+mkdir ws
+cd ws
+mkdir src
+cd src
+
+git clone https://github.com/PX4/px4_msgs.git
+cd px4_msgs
+git reset --hard f29c1d961e34489ef0e505c74467e980a0f0a988
+cd ..
+git clone https://github.com/PX4/px4_ros_com.git
+cd px4_ros_com
+git reset --hard 5e46ae598447a5a3f59aa5ecbf3422dfe12261a6
+cd ..
+cd ..
+source /opt/ros/humble/setup.bash
+colcon build
+
+
+
+## Slam toolbox
+sudo apt install ros-humble-slam-toolbox -y
+
+
+sudo rosdep init
+rosdep update
+
+
+##
+export GZ_VERSION=garden
+cd ~/ws/src
+
+# Download needed software
+git clone https://github.com/gazebosim/ros_gz.git
+cd ros_gz
+git reset --hard b5dffdeb9ce8d99fdb502f3b1c73e20325d04c3f
+
+cd ~/ws
+rosdep install -q -y -r --from-paths src --ignore-src --rosdistro humble
+
+##
+pip3 install python-dotenv
+pip3 install psutil
+
+
+##
+
+git clone https://github.com/ros-perception/pointcloud_to_laserscan.git
+cd pointcloud_to_laserscan
+git reset --hard 59bf996fb3ee7db0026a5cd3ce0d2a39d2e602ea
+cd ..
+colcon build
+
