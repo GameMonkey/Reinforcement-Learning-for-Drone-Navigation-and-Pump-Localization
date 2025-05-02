@@ -70,9 +70,18 @@ double accum_penalty = 0;
 const double upper_range_pump_detection = //TAG_upper_pump_detection_range;
 const double lower_range_pump_detection = 0.55;
 
-bool has_visited() {
+bool has_visited_turning() {
     for (i : int[0,horizon-1]) {
         if (visited[i][0] == x &amp;&amp; visited[i][1] == y &amp;&amp; visited[i][2] == yaw){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool has_visited_moving() {
+    for (i : int[0,horizon-1]) {
+        if (visited[i][0] == x &amp;&amp; visited[i][1] == y){
             return true;
         }
     }
@@ -421,14 +430,7 @@ broadcast chan turn_90deg_left, turn_90deg_right, turn_180deg;</declaration>
 		<name x="5" y="5">DroneController</name>
 		<declaration>clock c;
 
-
-
-
-//          0: West (+y),
-//          1: South (+x)
-//          2: East (-y),
-//          3: North (-x)
-bool can_move(int action, double step_length) {
+bool can_move_2(int action, int step_length) {
     int N_cells_in_dir = fint((step_length / 2) / map_granularity);
     int drone_cells_to_cover = fint((drone_diameter) / map_granularity);
     int safety_range_cells = fint(safety_range / map_granularity);
@@ -437,15 +439,6 @@ bool can_move(int action, double step_length) {
         drone_cells_to_cover += 1;
     }
 
-    if(step_length == 2.0) {
-        step_length = 2.0;
-    }else if(step_length == -2.0) {
-        step_length = -2.0;
-    }else if(step_length == 2.0) {
-        step_length = 2.0;
-    }else if(step_length == -2.0) {
-        step_length = -2.0;
-    }
 
     N_cells_in_dir = fint((step_length / 2) / map_granularity);
 
@@ -528,15 +521,125 @@ bool can_move(int action, double step_length) {
         return true;
     }
     return false;
+}
+
+
+//          0: West (+y),
+//          1: South (+x)
+//          2: East (-y),
+//          3: North (-x)
+bool can_move(int action, double step_length) {
+    int N_cells_in_dir = fint((step_length / 2) / map_granularity);
+    int drone_cells_to_cover = fint((drone_diameter) / map_granularity);
+    int safety_range_cells = fint(safety_range / map_granularity);
+
+    if(drone_cells_to_cover % 2 == 0) {
+        drone_cells_to_cover += 1;
+    }
+
+
+    N_cells_in_dir = fint((step_length / 2) / map_granularity);
+
+
+    if(action == 0) {
+        int lower_bound_x = x - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_x = x +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int upper_bound_y = y + N_cells_in_dir + safety_range_cells;
+
+        int i;
+        int j;
+
+        if(lower_bound_x &lt; 0 || upper_bound_x &gt; map_width || upper_bound_y &gt; map_height) {
+            return false;
+        }
+        for(i = lower_bound_x; i &lt; upper_bound_x; i++) {
+            for(j = y + (drone_cells_to_cover / 2); j &lt; upper_bound_y; j++) {
+                if( map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }else if(action == 1) {
+        int lower_bound_y = y - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_y = y +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int upper_bound_x = x + N_cells_in_dir + safety_range_cells;
+
+        int i;
+        int j;
+
+         if(lower_bound_y &lt; 0 || upper_bound_y &gt; map_height || upper_bound_x &gt; map_width) {
+            return false;
+        }
+        for(i = x + (drone_cells_to_cover / 2); i &lt; upper_bound_x; i++) {
+            for(j = lower_bound_y; j &lt; upper_bound_y; j++) {
+                if(map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }else if(action == 2) {
+        int lower_bound_x = x - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_x = x +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int lower_bound_y = y - N_cells_in_dir - safety_range_cells;
+
+        int i;
+        int j;
+
+        if(lower_bound_x &lt; 0 || upper_bound_x &gt; map_width || lower_bound_y &lt; 0) {
+            return false;
+        }
+        for(i = lower_bound_x; i &lt; upper_bound_x; i++) {
+            for(j = y - (drone_cells_to_cover / 2); j &gt;= lower_bound_y; j--) {
+                if(map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }else if(action == 3) {
+        int lower_bound_y = y - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_y = y +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int lower_bound_x = x - N_cells_in_dir - safety_range_cells;
+
+        int i;
+        int j;
+
+       if(lower_bound_y &lt; 0 ||upper_bound_y &gt; map_height || lower_bound_x &lt; 0) {
+            return false;
+        }
+        for(i = x - (drone_cells_to_cover / 2); i &gt;= lower_bound_x; i--) {
+            for(j = lower_bound_y; j &lt; upper_bound_y; j++) {
+                if(map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool moving(int action, int step_length){
+    if (step_length == 1) {
+        if (can_move_2(action, 2)){
+            return false;
+        }
+    }
+
+   return can_move(action, step_length); 
 }</declaration>
 		<location id="id0" x="892" y="238">
 			<name x="833" y="255">DescisionState</name>
+			<committed/>
 		</location>
 		<location id="id1" x="1419" y="246">
 		</location>
 		<location id="id2" x="620" y="238">
 		</location>
 		<location id="id3" x="892" y="85">
+			<committed/>
 		</location>
 		<location id="id4" x="892" y="-51">
 			<name x="875" y="-85">target</name>
@@ -621,7 +724,7 @@ bool can_move(int action, double step_length) {
 			<source ref="id0"/>
 			<target ref="id8"/>
 			<label kind="select" x="909" y="374">step_length : int [1,2]</label>
-			<label kind="guard" x="909" y="391">can_move(0,step_length)</label>
+			<label kind="guard" x="909" y="391">moving(0,step_length)</label>
 			<label kind="assignment" x="858" y="408">current_step_length = step_length</label>
 			<nail x="892" y="408"/>
 			<nail x="1122" y="408"/>
@@ -630,7 +733,7 @@ bool can_move(int action, double step_length) {
 			<source ref="id0"/>
 			<target ref="id7"/>
 			<label kind="select" x="943" y="297">step_length : int [1,2]</label>
-			<label kind="guard" x="943" y="314">can_move(2, step_length)</label>
+			<label kind="guard" x="943" y="314">moving(2, step_length)</label>
 			<label kind="assignment" x="901" y="331">current_step_length = step_length</label>
 			<nail x="935" y="331"/>
 			<nail x="1122" y="331"/>
@@ -639,14 +742,14 @@ bool can_move(int action, double step_length) {
 			<source ref="id0"/>
 			<target ref="id5"/>
 			<label kind="select" x="952" y="212">step_length : int [1,2]</label>
-			<label kind="guard" x="960" y="229">can_move(1, step_length)</label>
+			<label kind="guard" x="960" y="229">moving(1, step_length)</label>
 			<label kind="assignment" x="926" y="263">current_step_length = step_length</label>
 		</transition>
 		<transition id="id22">
 			<source ref="id0"/>
 			<target ref="id6"/>
 			<label kind="select" x="909" y="119">step_length : int [1,2]</label>
-			<label kind="guard" x="909" y="136">can_move(3, step_length)</label>
+			<label kind="guard" x="909" y="136">moving(3, step_length)</label>
 			<label kind="assignment" x="901" y="153">current_step_length = step_length</label>
 		</transition>
 	</template>
@@ -672,7 +775,7 @@ void turn_drone(double yaw_dx) {
     accum_penalty = accum_penalty - turning_cost;
     actions_taken += 1;
 
-    if (has_visited()) {
+    if (has_visited_turning()) {
         accum_penalty = accum_penalty - visited_cost;
     }else {
         visited[actions_taken][0] = x;
@@ -785,7 +888,7 @@ void move(double dir_x, double dir_y) {
     actions_taken += 1;
 
 
-    if (has_visited()) {
+    if (has_visited_moving()) {
         accum_penalty = accum_penalty - visited_cost;
     }else {
         visited[actions_taken][0] = x;
