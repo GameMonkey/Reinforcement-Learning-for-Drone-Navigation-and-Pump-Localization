@@ -64,13 +64,17 @@ class QueueLengthController(StrategoController):
 
     def run(self, queryfile="", learning_args={}, verifyta_path="/home/sw9-bois/uppaal-5.0.0-linux64/bin/verifyta", horizon=20):
         output = super().run(queryfile, learning_args, verifyta_path)
+        # with open("output.txt", "w") as f:
+        #     f.write(output)
         # parse output
 
-        tpls = sutil.get_int_tuples(output)
+        tpls = sutil.get_float_tuples(output)
         result = sutil.get_duration_action(tpls, max_time=1000)
         d,a = list(zip(*result))
 
-        actions = list(a[:horizon])
-        rewards = self.get_verbose_rewards(list(d[horizon:]), list(a[horizon:]))
+        actions = [int(x) for x in list(a[:horizon])]
+        durations = [int(x) for x in list(d[horizon:])]
+        rewards = self.get_verbose_rewards(durations, list(a[horizon:]))
+
 
         return actions, rewards
