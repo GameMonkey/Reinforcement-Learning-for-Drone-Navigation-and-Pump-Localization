@@ -20,13 +20,19 @@ include_directories(${EXTERNAL_INSTALL_LOCATION}/include)
 link_directories(${EXTERNAL_INSTALL_LOCATION}/lib)
 
 
-add_library(gridHelperLib SHARED library.cpp
+add_library(gridHelperLib SHARED gridHelper.cpp
         json_reader.h
-        json_reader.cpp)
+        json_reader.cpp
+        gridHelper.h)
 
-add_executable(gridHelper library.cpp
+add_executable(gridHelper gridHelper.cpp
         json_reader.h
-        json_reader.cpp)
+        json_reader.cpp
+        gridHelper.h
+        gridHelperTester.cpp)
 
 add_dependencies(gridHelperLib json-ext)
 add_dependencies(gridHelper json-ext)
+
+add_custom_target(BuildAllTargets)
+add_dependencies(BuildAllTargets gridHelperLib gridHelper)

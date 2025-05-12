@@ -5,19 +5,9 @@
 #include <fstream>
 #include <vector>
 
-//#include "map_data.h"
+#include "gridHelper.h"
 #include "json_reader.h"
 
-
-extern "C" {
-    bool init_setup();
-    double calculate_reward();
-    bool can_move(int action, int step_length);
-    bool turn_drone_ext(double yaw_dx);
-    bool move_ext(int dir_x, int dir_y);
-    void stop_logging();
-    void init_logging();
-}
 
 // Utilitise
 double e;
@@ -84,7 +74,7 @@ bool init_setup() {
         safety_range = get_safety_range();
         laser_range = get_laser_range();
         laser_range_diameter = get_laser_range_diameter();
-
+        
         // Setting rewards and costs
         discovery_reward = get_discovery_reward();
         turning_cost = get_turning_cost();
@@ -650,53 +640,3 @@ bool move_ext(int dir_x, int dir_y) {
     return true;
 }
 
-void hello() {
-    std::cout << "Hello, World!" << std::endl;
-}
-
-int main() {
-    ///hello();
-    load_json_file();
-    init_setup();
-    // std::cout << "This is the initial x-value: " << get_init_x() << std::endl;
-    // std::cout << "This is the initial y-value: " << get_init_y() << std::endl;
-    // std::cout << "This is the initial yaw-value: " << get_init_yaw() << std::endl;
-    // std::cout << "This is the width-value: " << get_width() << std::endl;
-    // std::cout << "This is the height-value: " << get_height() << std::endl;
-    // std::cout << "This is the initial epsilon-value: " << get_epsilon() << std::endl;
-    // std::cout << "This is the initial epsilon-yaw-value: " << get_epsilon_yaw() << std::endl;
-    // std::cout << "This is the granularity-value: " << get_granularity() << std::endl;
-    // std::cout << "Is the map 'open': " << is_map_open << std::endl;
-
-
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 2; j++) {
-            std::cout << "(i, j) = " << i << ", " << j << std::endl;
-            std::cout << can_move(i, j) << std::endl;
-        }
-    }
-
-    move_ext(2, 1);
-
-    // for (int i = 0; i < map_height; i++) {
-    //     for (int j = 0; j < map_width; j++) {
-    //         std::cout << map[i][j] << ", ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-    //
-    // map[0][0] = 10;
-    //
-    // std::cout << "The value of the first field is: " << map[0][0] << std::endl << std::endl;
-    //
-    init_setup();
-    //
-    //
-    // for (int i = 0; i < map_height; i++) {
-    //     for (int j = 0; j < map_width; j++) {
-    //         std::cout << map[i][j] << ", ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
-}
