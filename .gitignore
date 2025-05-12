@@ -15,4 +15,5 @@ stompc/query.q
 stompc/experiments/*
 stompc/results/*
 stompc/experiment_setups/*
+stompc/strategy.json
 !stompc/experiment_setups/default_config
