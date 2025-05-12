@@ -4,7 +4,8 @@ build/
 pumpdetection_model/outputs/model.pt
 .pt
 .env
-.idea/*
+**/.idea/*
+**/cmake-build-*/*
 
 
 # Project specific files
