@@ -14,7 +14,7 @@ int main() {
     // std::cout << "This is the height-value: " << get_height() << std::endl;
     // std::cout << "This is the initial epsilon-value: " << get_epsilon() << std::endl;
     // std::cout << "This is the initial epsilon-yaw-value: " << get_epsilon_yaw() << std::endl;
-
+    //
     // std::cout << "This is the granularity-value: " << get_granularity() << std::endl;
     // std::cout << "Is the map 'open': " << is_map_open << std::endl;
 

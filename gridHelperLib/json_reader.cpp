@@ -1,6 +1,7 @@
 #include "json_reader.h"
 
 #include <fstream>
+#include <iostream>
 
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
@@ -10,24 +11,24 @@ std::ifstream json_file;
 json data;
 
 void load_json_file() {
-    std::ifstream json_file{"/home/martin/Desktop/UppaalSpeedUp/gridHelperLib/test_file.json"};
+    std::ifstream json_file{"/home/martin/Research/Grundfos\ Project/Code-Base/gridHelperLib/test_file.json"};
     data = json::parse(json_file);
 }
 
 int get_init_x() {
-    return data["map_config"]["init_x"];
+    return data["map_config"]["x"];
 }
 
 int get_init_y() {
-    return data["map_config"]["init_y"];
+    return data["map_config"]["y"];
 }
 
 double get_init_yaw() {
-    return data["map_config"]["init_yaw"];
+    return data["map_config"]["yaw"];
 }
 
 double get_granularity() {
-    return data["map_config"]["granularity"];
+    return data["map_config"]["granularity_map"];
 }
 
 bool is_map_open() {
@@ -35,11 +36,11 @@ bool is_map_open() {
 }
 
 int get_width() {
-    return data["map_config"]["width"];
+    return data["map_config"]["width_map"];
 }
 
 int get_height() {
-    return data["map_config"]["height"];
+    return data["map_config"]["height_map"];
 }
 
 double get_epsilon() {
@@ -87,7 +88,7 @@ void load_map(std::vector<std::vector<short>>& init_map) {
 
     for (int i = 0; i < get_height(); i++) {
         for (int j = 0; j < get_width(); j++) {
-            init_map[i][j] = data["map_config"]["init_map"][i][j];
+            init_map[i][j] = data["map_config"]["map"][i][j];
         }
     }
 
