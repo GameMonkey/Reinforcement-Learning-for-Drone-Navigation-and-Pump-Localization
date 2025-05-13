@@ -326,7 +326,6 @@ def activate_action(action):
 
 def run(template_file, query_file, verifyta_path):
     global CURR_TIME_SPENT
-    print("running uppaal")
     controller = QueueLengthController(
         templatefile=template_file,
         state_names=["x", "y", "yaw",
@@ -457,6 +456,7 @@ def run(template_file, query_file, verifyta_path):
             if not USE_BASELINE:
                 controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
                 try:
+                    print("Running uppaal")
                     action_seq, reward_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args, horizon=HORIZON)
                     print("Got action+reward sequence from STRATEGO: ", list(zip(action_seq,reward_seq)))
                     os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
@@ -466,6 +466,7 @@ def run(template_file, query_file, verifyta_path):
                     Popen("./killall.sh", shell=True).wait()
             else:
                 try:
+                    print("Running baseline")
                     action_seq = bfs(state, drone_specs, map_config)
                     print("Got action sequence from BFS approach: ", action_seq)
                     if len(action_seq) == 0:

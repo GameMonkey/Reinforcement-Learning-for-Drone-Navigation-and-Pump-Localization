@@ -3,13 +3,26 @@ source /opt/ros/humble/setup.bash #not needed if both of these source are in .ba
 source ~/ws/install/local_setup.bash
 cd ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc
 
+For experiments, stompc can also be run using the automated script provided, run-script.sh
+example: ./run-script.sh 5 will run the stompc code 5 times, resultating in 5 runs. It looks for experiment config in the folder ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/experiment_setups. It will run all .yaml files placed in the folder, making it possible to collect samples from multiple setups.
+
+The script will handle the collection of all results and placing them in a folder corrosponding to the name of the experiment, compressing them and then deleting the folder. (WARNING: the script will place any and all folders in the finished folder that is used for compression, so make sure to that before running experiments, that no folder from previous runs are in there. However, the script should take care of the deletion and cleanup between experiment setups.)
+
+# To make sure the automatic script works
+    step 1: Place the 4 world files in PX4-Autopilot/Tools/simulation/gz/worlds
+	    - The four world files are default.sdf, cylinderRoom.sdf, largeRoom.sdf and tetrisRoom.sdf
+    step 2: build PX4 again using the command "make px4_sitl" from inside the PX4-Autopilot
+
 # To run rviz2
 source /opt/ros/humble/setup.bash
 rviz2 -d ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/rviz2_cfg/basic_cfg.rviz
 
-# To change slam params, open the following file with sudo
-/opt/ros/humble/share/slam_toolbox/config/mapper_params_online_async.yaml
+# To change slam params
+vi /opt/ros/humble/share/slam_toolbox/config/mapper_params_online_async.yaml
 
+
+###############################################################################################################################
+###############################################################################################################################
 
 # Installation of ros, gz and all else.
 
@@ -17,6 +30,7 @@ sudo apt-get update
 sudo apt-get upgrade -y
 
 
+# Installation of editor (used by us, use whatever editor is suited)
 sudo apt install git emacs -y
 
 # python dependencies
@@ -55,7 +69,7 @@ source /opt/ros/humble/setup.bash
 
 pip3 install strategoutil
 
-## Install PX4 without a simulator as we have manually installed Harmomic.
+## Install PX4 without a simulator as we have manually installed Gazebo Garden.
 cd
 git clone https://github.com/PX4/PX4-Autopilot.git
 cd PX4-Autopilot
