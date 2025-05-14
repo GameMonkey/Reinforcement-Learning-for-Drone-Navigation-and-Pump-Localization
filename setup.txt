@@ -78,7 +78,11 @@ git submodule update --recursive
 cd
 bash ./PX4-Autopilot/Tools/setup/ubuntu.sh --no-sim-tools
 cd PX4-Autopilot/
+# Before running the next command do the following (if the folders mentioned below isn't there, run the make command first, do the steps below and run make again):
+    1: copy the content of gazebo_worlds into the following folder "/PX4-Autopilot/Tools/simulation/gz/worlds
+    2: copy the content of gazebo_models into the following folder "/PX4-Autopilot/Tools/simulation/gz/models
 make px4_sitl
+
 
 cd 
 git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git -b 57d086216d01ec43121845d385894a25987f8a2c
