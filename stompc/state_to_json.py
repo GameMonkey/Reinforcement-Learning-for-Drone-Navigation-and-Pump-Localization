@@ -15,16 +15,13 @@ def construct_json_state(uppaal_state):
     map_str = map_str.split("=")[1] #Only keeping the part after the "=" sign.
     map_str = map_str.replace("{", "[")
     map_str = map_str.replace("}", "]")
-    map = eval(map_str.replace("\n", ""))
-
-    for row in map:
-        print(len(row))
-    print(len(map))
-    map_state["map"] = map
+    init_map = eval(map_str.replace("\n", ""))
+    
+    map_state["map"] = init_map
 
     global_state["map_config"] = map_state
 
-    print(json.dumps(global_state))
+    return json.dumps(global_state, indent=2)
 
 
 
@@ -251,4 +248,7 @@ if __name__ == "__main__":
         "open": 1
     }
 
-    construct_json_state(test_state)
+    new_state = construct_json_state(test_state)
+
+    with open("state.json", "w") as f:
+        f.write(new_state)

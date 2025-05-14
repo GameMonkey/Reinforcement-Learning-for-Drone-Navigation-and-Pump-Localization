@@ -11,85 +11,175 @@ std::ifstream json_file;
 json data;
 
 void load_json_file() {
-    std::ifstream json_file{"/home/martin/Research/Grundfos\ Project/Code-Base/gridHelperLib/test_file.json"};
+    std::ifstream json_file{"/home/martin/Research/Grundfos Project/Code-Base/stompc/state.json"};
     data = json::parse(json_file);
 }
 
 int get_init_x() {
-    return data["map_config"]["x"];
+    try {
+        return data["map_config"]["x"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'x' from JSON configuration");
+    }
 }
 
 int get_init_y() {
-    return data["map_config"]["y"];
+    try {
+        return data["map_config"]["y"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'y' from JSON configuration");
+    }
 }
 
 double get_init_yaw() {
-    return data["map_config"]["yaw"];
+    try {
+        return data["map_config"]["yaw"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'yaw' from JSON configuration");
+    }
 }
 
 double get_granularity() {
-    return data["map_config"]["granularity_map"];
+    try {
+        return data["map_config"]["granularity_map"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'granularity_map' from JSON configuration");
+    }
 }
 
 bool is_map_open() {
-    return data["map_config"]["open"];
+    try {
+        int i_value = data["map_config"]["open"];
+        return static_cast<bool>(i_value);
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'open' from JSON configuration");
+    }
 }
 
 int get_width() {
-    return data["map_config"]["width_map"];
+    try {
+        return data["map_config"]["width_map"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'width_map' from JSON configuration");
+    }
 }
 
 int get_height() {
-    return data["map_config"]["height_map"];
+    try {
+        return data["map_config"]["height_map"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'height_map' from JSON configuration");
+    }
 }
 
 double get_epsilon() {
-    return data["uncertainty"]["epsilon"];
+    try{
+        return data["uncertainty"]["epsilon"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'epsilon' from JSON configuration");
+    }
 }
 
 double get_epsilon_yaw() {
-    return data["uncertainty"]["epsilon_yaw"];
+    try {
+        return data["uncertainty"]["epsilon_yaw"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'epsilon_yaw' from JSON configuration");
+    }
 }
 
 double get_drone_diameter() {
-    return data["drone_config"]["drone_diameter"];
+    try {
+        return data["drone_config"]["drone_diameter"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'drone_diameter' from JSON configuration");
+    }
 }
 
 double get_safety_range() {
-    return data["drone_config"]["safety_range"];
+    try {
+        return data["drone_config"]["safety_range"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'safety_range' from JSON configuration");
+    }
 }
 
 int get_laser_range() {
-    return data["drone_config"]["laser_range"];
+    try {
+        return data["drone_config"]["laser_range"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'laser_range' from JSON configuration");
+    }
 }
 
 int get_laser_range_diameter() {
-    return data["drone_config"]["laser_range_diameter"];
+    try {
+        return data["drone_config"]["laser_range_diameter"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'laser_range_diameter' from JSON configuration");
+    }
 }
 
 int get_discovery_reward() {
-    return data["rewards_costs"]["discovery_reward"];
+    try {
+        return data["rewards_costs"]["discovery_reward"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'discovery_reward' from JSON configuration");
+    }
 }
 
 int get_turning_cost() {
-    return data["rewards_costs"]["turning_cost"];
+    try {
+        return data["rewards_costs"]["turning_cost"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'turning_cost' from JSON configuration");
+    }
 }
 
 int get_moving_cost() {
-    return data["rewards_costs"]["moving_cost"];
+    try {
+        return data["rewards_costs"]["moving_cost"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'moving_cost' from JSON configuration");
+    }
 }
 
 int get_pump_reward() {
-    return data["rewards_costs"]["pump_exploration_reward"];
+    try {
+        return data["rewards_costs"]["pump_exploration_reward"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'moving_cost' from JSON configuration");
+    }
 }
 
 
 void load_map(std::vector<std::vector<short>>& init_map) {
-
-    for (int i = 0; i < get_height(); i++) {
-        for (int j = 0; j < get_width(); j++) {
-            init_map[i][j] = data["map_config"]["map"][i][j];
+    try {
+        for (int i = 0; i < get_height(); i++) {
+            for (int j = 0; j < get_width(); j++) {
+                init_map[i][j] = data["map_config"]["map"][i][j];
+            }
         }
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error converting initial map from JSON configuration into C++ map");
     }
 
 }
