@@ -1,7 +1,7 @@
 import json
 
 
-def construct_json_state(uppaal_state):
+def construct_map_state(uppaal_state):
     map_state_vars = ["x", "y", "yaw", "granularity_map", "open", "width_map", "height_map"]
 
     map_state = dict()
@@ -16,14 +16,43 @@ def construct_json_state(uppaal_state):
     map_str = map_str.replace("{", "[")
     map_str = map_str.replace("}", "]")
     init_map = eval(map_str.replace("\n", ""))
-    
+
     map_state["map"] = init_map
 
     global_state["map_config"] = map_state
 
-    return json.dumps(global_state, indent=2)
+    return global_state
 
 
+def construct_uncertainty_state(epsilon, epsilon_yaw):
+    epsilons = dict()
+
+    epsilons["epsilon"] = epsilon
+    epsilons["epsilon_yaw"] = epsilon_yaw
+
+    return {"uncertainty" : epsilons}
+
+
+def construct_drone_configuration(uppaal_state):
+    drone_config = dict()
+
+    drone_config["drone_diameter"] = uppaal_state["drone_diameter"]
+    drone_config["safety_range"] = uppaal_state["safety_range"]
+    drone_config["laser_range"] = uppaal_state["laser_range"]
+    drone_config["laser_range_diameter"] = uppaal_state["laser_range_diameter"]
+
+    return {"drone_config": drone_config}
+
+
+def construct_reward_cost_configuration(uppaal_state):
+    reward_cost_config = dict()
+
+    reward_cost_config["discovery_reward"] = uppaal_state["discovery_reward"]
+    reward_cost_config["turning_cost"] = uppaal_state["turning_cost"]
+    reward_cost_config["moving_cost"] = uppaal_state["moving_cost"]
+    reward_cost_config["pump_exploration_reward"] = uppaal_state["pump_exploration_reward"]
+
+    return {"rewards_costs": reward_cost_config}
 
 if __name__ == "__main__":
 
@@ -238,17 +267,31 @@ if __name__ == "__main__":
 }"""
 
     test_state = {
-        "x": 10,
-        "y": 20,
+        "x": 79,
+        "y": 133,
         "yaw": -1.57,
         "map": cur_map,
-        "width_map": 200,
-        "height_map": 300,
+        "width_map": 126,
+        "height_map": 206,
         "granularity_map": 0.05,
-        "open": 1
+        "open": 1,
+        "drone_diameter": 0.6,
+        "safety_range": 0.4,
+        "laser_range": 4,
+        "laser_range_diameter": 3,
+        "discovery_reward": 1,
+        "turning_cost": 10,
+        "moving_cost": 10,
+        "pump_exploration_reward": 10000000
     }
 
-    new_state = construct_json_state(test_state)
+    new_map_state = construct_map_state(test_state)
+    epsilon_state = construct_uncertainty_state(0.5, 0.2)
+    drone_config = construct_drone_configuration(test_state)
+    reward_cost_config = construct_reward_cost_configuration(test_state)
+
+    new_state = new_map_state | epsilon_state | drone_config | reward_cost_config
+    new_state = json.dumps(new_state, indent=2)
 
     with open("state.json", "w") as f:
         f.write(new_state)
