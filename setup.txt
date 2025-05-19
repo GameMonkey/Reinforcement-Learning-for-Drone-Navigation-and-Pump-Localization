@@ -1,3 +1,12 @@
+# Create .env file
+In order for the code to run, it is nessecary that to tell the program some locations and the current domain id ros uses.
+Start by creating a .env file in the home folder (we know this is not ideal) and place the following:
+
+DOMAIN="" - Here you place the value of your chosen ROS_DOMAIN_ID. ROS by default uses 0
+VERIFYTA_PATH="" -> place the path for verifyta from Uppaal
+GZ_PATH="" -> place the path to the PX4-Autopilot folder
+LAUNCH_FILE_PATH="" -> place the full path to the launch file folder
+
 # To run stompc code
 source /opt/ros/humble/setup.bash #not needed if both of these source are in .bashrc
 source ~/ws/install/local_setup.bash
@@ -8,7 +17,7 @@ example: ./run-script.sh 5 will run the stompc code 5 times, resultating in 5 ru
 
 The script will handle the collection of all results and placing them in a folder corrosponding to the name of the experiment, compressing them and then deleting the folder. (WARNING: the script will place any and all folders in the finished folder that is used for compression, so make sure to that before running experiments, that no folder from previous runs are in there. However, the script should take care of the deletion and cleanup between experiment setups.)
 
-# To make sure the automatic script works
+# To make sure the automatic script works (this might have been done during the installation, if so, skip this)
     step 1: Place the 4 world files in PX4-Autopilot/Tools/simulation/gz/worlds
 	    - The four world files are default.sdf, cylinderRoom.sdf, largeRoom.sdf and tetrisRoom.sdf
     step 2: build PX4 again using the command "make px4_sitl" from inside the PX4-Autopilot
@@ -103,14 +112,27 @@ cd ws
 mkdir src
 cd src
 
+export GZ_VERSION=garden
+
 git clone https://github.com/PX4/px4_msgs.git
 cd px4_msgs
 git reset --hard f29c1d961e34489ef0e505c74467e980a0f0a988
 cd ..
+
 git clone https://github.com/PX4/px4_ros_com.git
 cd px4_ros_com
 git reset --hard 5e46ae598447a5a3f59aa5ecbf3422dfe12261a6
 cd ..
+
+git clone https://github.com/gazebosim/ros_gz.git
+cd ros_gz
+git reset --hard b5dffdeb9ce8d99fdb502f3b1c73e20325d04c3f
+cd ..
+cd ..
+
+git clone https://github.com/ros-perception/pointcloud_to_laserscan.git
+cd pointcloud_to_laserscan
+git reset --hard 59bf996fb3ee7db0026a5cd3ce0d2a39d2e602ea
 cd ..
 source /opt/ros/humble/setup.bash
 colcon build
@@ -120,19 +142,19 @@ colcon build
 ## Slam toolbox
 sudo apt install ros-humble-slam-toolbox -y
 
+After install, open the following file with sudo: /opt/ros/humble/share/slam_toolbox/config/mapper_params_online_async.yaml
+and change the following parameters:
+minimum_travel_distance: 0.5 -> 0.2
+minimum_travel_heading: 0.5 -> 0.2
+
+If one wants to change the resolution/granularity of the map to make it more coarse or fine, change the resolution parameter.
+
 
 sudo rosdep init
 rosdep update
 
 
-##
-export GZ_VERSION=garden
-cd ~/ws/src
-
 # Download needed software
-git clone https://github.com/gazebosim/ros_gz.git
-cd ros_gz
-git reset --hard b5dffdeb9ce8d99fdb502f3b1c73e20325d04c3f
 
 cd ~/ws
 rosdep install -q -y -r --from-paths src --ignore-src --rosdistro humble
@@ -144,9 +166,5 @@ pip3 install psutil
 
 ##
 
-git clone https://github.com/ros-perception/pointcloud_to_laserscan.git
-cd pointcloud_to_laserscan
-git reset --hard 59bf996fb3ee7db0026a5cd3ce0d2a39d2e602ea
-cd ..
-colcon build
-
+## Uppaal
+Go to uppaal.org and follow install instructions
