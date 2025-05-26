@@ -58,9 +58,6 @@ bool init_setup() {
     if (map.size() == 0) {
         load_json_file();
 
-        x = get_init_x();
-        y = get_init_y();
-        yaw = get_init_yaw();
 
         map_width = get_width();
         map_height = get_height();
@@ -87,8 +84,11 @@ bool init_setup() {
         load_map(init_map);
     }
 
+    x = get_init_x();
+    y = get_init_y();
+    yaw = get_init_yaw();
         // Copy the initial map
-        map = init_map;
+    map = init_map;
 
         // log_file << "Starting New Run...!" << std::endl;
         // log_file.flush();

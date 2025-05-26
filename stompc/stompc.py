@@ -4,32 +4,30 @@ import rclpy
 import sys
 import threading
 import strategoutil as sutil
-import time
-import math
 import csv
 import yaml
 import datetime
 import signal
-from subprocess import Popen, PIPE, DEVNULL
-from multiprocessing import Process, Queue, Pipe
-from bfs import get_path_from_bfs, bfs
+from subprocess import Popen, DEVNULL
+from bfs import bfs
 sys.path.insert(0, '../')
 from dotenv import load_dotenv
 load_dotenv()
 
 
 from gz_utils import run_gz, run_xrce_agent, run_launch_file
-from ROS import vehicle_odometry, offboard_control, camera_control, lidar_sensor, odom_publisher, map_processing
+from ROS import vehicle_odometry, offboard_control, odom_publisher, map_processing
 import time
 import psutil
 from model_interface import QueueLengthController
-from bridges import init_rclpy, shutdown_rclpy
-from environment import generate_environment
+from bridges import init_rclpy
 from utils import turn_drone, shield_action, build_uppaal_2d_array_string, run_pump_detection, check_map_closed, measure_coverage, store_shielded_state
-from utils import action_names, kill_nodes
-from classes import State, DroneSpecs, TrainingParameters
-from maps import get_baseline_one_pump_config, get_baseline_two_pumps_config, get_baseline_big_room_config, get_baseline_tetris_room_config,get_baseline_cylinder_room_config
+from utils import action_names
+from classes import DroneSpecs, TrainingParameters
+from maps import get_baseline_one_pump_config, get_baseline_big_room_config, get_baseline_tetris_room_config,get_baseline_cylinder_room_config
 
+
+import model_construction
 
 
 
@@ -327,47 +325,24 @@ def activate_action(action):
 def run(template_file, query_file, verifyta_path):
     global CURR_TIME_SPENT
     print("running uppaal")
-    controller = QueueLengthController(
-        templatefile=template_file,
-        state_names=["x", "y", "yaw",
-                     "width_map","height_map",
-                     "map",
-                     "granularity_map",
-                     "open",
-                     "discovery_reward",
-                     "turning_cost",
-                     "moving_cost",
-                     "drone_diameter",
-                     "safety_range",
-                     "range_laser",
-                     "laser_range_diameter",
-                     "pump_exploration_reward",
-                     "upper_pump_detection_range",
-                     "horizon",
-                     "visited",
-                     "visited_cost"])
+    controller = model_construction.init_pure_uppaal_controller(template_file)
+    controller_ext = model_construction.init_uppaal_using_ext_lib_controller(template_file)
+
     # initial drone state
-    x = float(vehicle_odometry.get_drone_pos_x())
-    y = float(vehicle_odometry.get_drone_pos_y())
+    # x = float(vehicle_odometry.get_drone_pos_x())
+    # y = float(vehicle_odometry.get_drone_pos_y())
     action_seq = []
     reward_seq = []
     num_of_actions = 0
     N = 0
-    optimize = "maxE"
-    learning_param = "accum_reward + accum_penalty"
-    state = map_processing.process_map_data(x,y, map_config)
-    state.yaw = offboard_control_instance.yaw
-    controller.generate_query_file(optimize, learning_param,
-                                   #state_vars=["DroneController.DescisionState"],
-                                   state_vars=["DroneController.DescisionState", "yaw", "x", "y"],
-                                   point_vars=["time"],
-                                   #point_vars=["yaw", "x", "y"],
-                                   observables=["action", "accum_reward"],
-                                   horizon=HORIZON)
-
+    # optimize = "maxE"
+    # learning_param = "accum_reward + accum_penalty"
+    state = None
+    # state.yaw = offboard_control_instance.yaw
+    model_construction.generate_query_file(controller, HORIZON)
 
     k = 0
-    actions_left_to_trigger_learning = 3
+    # actions_left_to_trigger_learning = 3
     train = True
     learning_time_accum = 0
 
@@ -451,6 +426,7 @@ def run(template_file, query_file, verifyta_path):
                 "visited_cost": training_parameters.visited_cost,
             }
             controller.insert_state(uppaal_state)
+            controller_ext.insert_state(uppaal_state)
             train = False
             UPPAAL_START_TIME = time.time()
 
