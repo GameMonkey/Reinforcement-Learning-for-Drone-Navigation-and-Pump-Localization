@@ -28,7 +28,7 @@ from maps import get_baseline_one_pump_config, get_baseline_big_room_config, get
 
 
 import model_construction
-
+from state_to_json import construct_json_state
 
 
 global offboard_control_instance
@@ -397,6 +397,7 @@ def run(template_file, query_file, verifyta_path):
             print("Beginning trainng for iteration {}".format(N))
 
             controller.init_simfile()
+            controller_ext.init_simfile()
 
             """ if(len(action_seq) == actions_left_to_trigger_learning):
                 state = predict_state_based_on_action_seq(action_seq) """
@@ -427,13 +428,19 @@ def run(template_file, query_file, verifyta_path):
             }
             controller.insert_state(uppaal_state)
             controller_ext.insert_state(uppaal_state)
+
+            json_state = construct_json_state(uppaal_state, 0.5, 0.2)
+            with open("state.json", "w") as f_state:
+                f_state.write(json_state)
+
             train = False
             UPPAAL_START_TIME = time.time()
 
             if not USE_BASELINE:
                 controller.debug_copy(res_folder + "/Model_of_state_{}.xml".format(N))
+                controller_ext.debug_copy(res_folder + "/Model_ext.xml")
                 try:
-                    action_seq, reward_seq = controller.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args, horizon=HORIZON)
+                    action_seq, reward_seq = controller_ext.run(queryfile=query_file,verifyta_path=verifyta_path,learning_args=learning_args, horizon=HORIZON)
                     print("Got action+reward sequence from STRATEGO: ", list(zip(action_seq,reward_seq)))
                     os.rename("./strategy.json", "./" + res_folder + "/strategy_{}.json".format(N))
                 except Exception as e:
@@ -565,7 +572,7 @@ def main():
 
 
     print("All nodes are spinning")
-    base_path = os.path.dirname(os.path.realpath(__file__)) 
+    base_path = os.path.dirname(os.path.realpath(__file__))
     template_file = os.path.join(base_path, args.template_file)
     query_file = os.path.join(base_path, args.query_file)
 

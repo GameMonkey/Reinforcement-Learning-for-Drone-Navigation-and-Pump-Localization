@@ -54,6 +54,18 @@ def construct_reward_cost_configuration(uppaal_state):
 
     return {"rewards_costs": reward_cost_config}
 
+
+def construct_json_state(uppaal_state, epsilon, epsilon_yaw):
+    new_map_state = construct_map_state(uppaal_state)
+    epsilon_state = construct_uncertainty_state(epsilon, epsilon_yaw)
+    drone_config = construct_drone_configuration(uppaal_state)
+    reward_cost_config = construct_reward_cost_configuration(uppaal_state)
+
+    new_state = new_map_state | epsilon_state | drone_config | reward_cost_config
+    new_state = json.dumps(new_state, indent=2)
+
+    return new_state
+
 if __name__ == "__main__":
 
     cur_map = """
@@ -285,13 +297,7 @@ if __name__ == "__main__":
         "pump_exploration_reward": 10000000
     }
 
-    new_map_state = construct_map_state(test_state)
-    epsilon_state = construct_uncertainty_state(0.5, 0.2)
-    drone_config = construct_drone_configuration(test_state)
-    reward_cost_config = construct_reward_cost_configuration(test_state)
-
-    new_state = new_map_state | epsilon_state | drone_config | reward_cost_config
-    new_state = json.dumps(new_state, indent=2)
+    new_state = construct_json_state(test_state, 0.5, 0.2)
 
     with open("state.json", "w") as f:
         f.write(new_state)
