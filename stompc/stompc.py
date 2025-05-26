@@ -464,6 +464,7 @@ def run(template_file, query_file, verifyta_path):
                     print("UPPAAL might have raised an exception, killing everything and going again.")
                     print(e)
                     Popen("./killall.sh", shell=True).wait()
+                    return None
             else:
                 try:
                     print("Running baseline")
@@ -476,6 +477,7 @@ def run(template_file, query_file, verifyta_path):
                 except Exception:
                     print("An exception might have been raised during the baseline search, killing everything and going again.")
                     Popen("./killall.sh", shell=True).wait()
+                    return None
 
             copy_action_seq = [x for x in action_seq]
 

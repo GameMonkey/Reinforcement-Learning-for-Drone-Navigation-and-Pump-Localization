@@ -1,4 +1,5 @@
 import rclpy
+from numpy.f2py.auxfuncs import throw_error
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
 from map_msgs.msg import OccupancyGridUpdate
