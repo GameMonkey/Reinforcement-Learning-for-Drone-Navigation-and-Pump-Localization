@@ -94,10 +94,10 @@ make px4_sitl
 
 
 cd 
-git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git -b 57d086216d01ec43121845d385894a25987f8a2c
+git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
 cd Micro-XRCE-DDS-Agent
 mkdir build
-## Change version of fast-dds to 2.12.2 in CMakeList.txt
+## Change version of fast-dds to v3.2.2 in CMakeList.txt
 cd build
 cmake ..
 make
