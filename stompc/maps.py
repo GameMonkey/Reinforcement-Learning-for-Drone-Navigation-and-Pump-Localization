@@ -24,9 +24,9 @@ def get_baseline_cylinder_room_config(granularity=0.05):
     config = MapConfig(pumps=[pump1,pump2,pump3], fake_pumps=[], n_cells_in_area=round((8.86214**2)/(granularity**2)))
     return config
 
-##################################
-### BASELINE MAP WITH ONE PUMP ###
-##################################
+#####################################
+### LARGE MAP MAP WITH FOUR PUMPS ###
+#####################################
 def get_baseline_big_room_config(granularity=0.05):
     pump = Pump(0,14)
     pump2 = Pump(11.5, 14)
@@ -36,7 +36,9 @@ def get_baseline_big_room_config(granularity=0.05):
     config = MapConfig(pumps=[pump, pump2, pump3], fake_pumps=[fake_pump], n_cells_in_area=round((19**2)/(granularity**2)))
     return config
 
-
+######################################
+### TETRIS MAP MAP WITH ONE PUMPS  ###
+######################################
 def get_baseline_tetris_room_config(granularity=0.05):
     pump = Pump(4,-4)
     fake_pump = Pump(0,-7)
