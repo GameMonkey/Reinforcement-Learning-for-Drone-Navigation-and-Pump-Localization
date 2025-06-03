@@ -11,7 +11,7 @@ std::ifstream json_file;
 json data;
 
 void load_json_file() {
-    std::ifstream json_file{"/home/martin/Research/Grundfos Project/Code-Base/stompc/state.json"};
+    std::ifstream json_file{"/home/gp/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/state.json"};
     data = json::parse(json_file);
 }
 
@@ -132,6 +132,16 @@ int get_laser_range_diameter() {
         throw std::runtime_error("Error reading 'laser_range_diameter' from JSON configuration");
     }
 }
+
+double get_pump_detection_range() {
+    try {
+        return data["drone_config"]["upper_pump_detection_range"];
+    }
+    catch (json::type_error& e) {
+        throw std::runtime_error("Error reading 'upper_pump_detection_range' from JSON configuration");
+    }
+}
+
 
 int get_discovery_reward() {
     try {

@@ -1,5 +1,7 @@
 import argparse
 import os
+import shutil
+
 import rclpy
 import sys
 import threading
@@ -121,7 +123,7 @@ with open(config_file) as f:
                              safety_range=drone_cfg['safety_range'],
                              laser_range=drone_cfg['laser_range'],
                              laser_range_diameter=drone_cfg['laser_range_diameter'],
-                             upper_pump_detection_range=drone_cfg['upper_pump_detection_range'])
+                             upper_pump_detection_range=drone_cfg['upper_pump_detection_range']) # To ensure that the model is more pessimistic than the Python Code
 
     training_parameters = TrainingParameters(open=training_params['open'],
                                              turning_cost=training_params['turning_cost'],
@@ -192,8 +194,9 @@ def activate_action_with_shield(action, step_num, iteration, action_seq):
         actions_taken.append(action_names[4])
         actions_taken.append(action_names[4])
         actions_taken.append(action_names[4])
-        print("Sleeping 2 seconds to give time for the map to update")
-        time.sleep(5)
+        sleep_value = 10
+        print("Sleeping {} seconds to give time for the map to update".format(sleep_value))
+        time.sleep(sleep_value)
 
         state = get_current_state()
         if(shield_action(action,state,drone_specs)):
@@ -322,11 +325,11 @@ def activate_action(action):
     return state
 
 
-def run(template_file, query_file, verifyta_path):
+def run(template_file, template_file_ext, query_file, verifyta_path):
     global CURR_TIME_SPENT
     print("running uppaal")
     controller = model_construction.init_pure_uppaal_controller(template_file)
-    controller_ext = model_construction.init_uppaal_using_ext_lib_controller(template_file)
+    controller_ext = model_construction.init_uppaal_using_ext_lib_controller(template_file_ext)
 
     # initial drone state
     # x = float(vehicle_odometry.get_drone_pos_x())
@@ -382,8 +385,9 @@ def run(template_file, query_file, verifyta_path):
     print("Drone responds to commands")
     # run_action_seq([4,4,4,4], 0, 0, 0)
     # Initial wait to ensure that the map is updated!
-    print("Started sleeping for 5 sec")
-    time.sleep(5)
+    sleep_value = 10
+    print("Started sleeping for {} sec".format(sleep_value))
+    time.sleep(sleep_value)
 
 
     #while N <= 2:
@@ -392,8 +396,9 @@ def run(template_file, query_file, verifyta_path):
 
         if train == True or k % HORIZON == 0:
             N = N + 1
-            print("Started sleeping for 5 sec")
-            time.sleep(5)
+            sleep_value = 10
+            print("Started sleeping for {} sec".format(sleep_value))
+            time.sleep(sleep_value)
             print("Beginning trainng for iteration {}".format(N))
 
             controller.init_simfile()
@@ -432,6 +437,7 @@ def run(template_file, query_file, verifyta_path):
             json_state = construct_json_state(uppaal_state, 0.5, 0.2)
             with open("state.json", "w") as f_state:
                 f_state.write(json_state)
+                shutil.copy("state.json", res_folder + "/state_{}.json".format(N))
 
             train = False
             UPPAAL_START_TIME = time.time()
@@ -507,7 +513,9 @@ def run(template_file, query_file, verifyta_path):
 
                     print(f'Reward for action {action_names[action]}: {curr_reward}')
                     print("Actions and rewards left: ", list(zip(action_seq,reward_seq)))
-                    if not any(x > curr_reward for x in reward_seq):
+                    print("\n\n")
+                    ## Checking if there is a value later that is the current value plus one (epsilon) higher.
+                    if not any(x > (curr_reward + 1) for x in reward_seq):
                         print('No further action would increase the reward, moving on to next iteration...')
                         train = True
                         k = 0
@@ -544,7 +552,7 @@ def main():
     executor_controller.add_node(offboard_control_instance)
     offboard_thread = threading.Thread(target=executor_controller.spin, daemon=True)
     offboard_thread.start()
-    time.sleep(5)
+    time.sleep(10)
     print("Done onboarding controller")
 
     print("Manually starting Odometry")
@@ -567,13 +575,14 @@ def main():
     frame_thread = threading.Thread(target=executor_frame.spin, daemon=True)
     frame_thread.start()
     print("Frame pid:", frame_thread.native_id)
-    time.sleep(2)
+    time.sleep(10)
     print("Done with Map Framer")
 
 
     print("All nodes are spinning")
     base_path = os.path.dirname(os.path.realpath(__file__))
     template_file = os.path.join(base_path, args.template_file)
+    template_file_ext = os.path.join(base_path, "drone_model_stompc_continuous_with_external.xml")
     query_file = os.path.join(base_path, args.query_file)
 
     drone_start_time = time.time()
@@ -618,12 +627,12 @@ def main():
 
     print("Starting launch")
     run_launch_file(LAUNCH_PATH=ENV_LAUNCH_FILE_PATH)
-    time.sleep(10)
+    time.sleep(15)
     print("Completed Launch")
 
 
     try:
-        pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, query_file, args.verifyta_path)
+        pumps_found, map_closed, room_covered, N, learning_time_accum, num_of_actions = run(template_file, template_file_ext, query_file, args.verifyta_path)
     except Exception as e:
         print("Run Failed. Destroying Nodes")
         print(e)

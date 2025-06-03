@@ -24,6 +24,7 @@ double get_drone_diameter();
 double get_safety_range();
 int get_laser_range();
 int get_laser_range_diameter();
+double get_pump_detection_range();
 
 
 // Rewards and costs

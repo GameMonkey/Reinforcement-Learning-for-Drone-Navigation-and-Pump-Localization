@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
 <nta>
-	<declaration>import "/home/martin/Desktop/UppaalSpeedUp/gridHelperLib/cmake-build-release/libgridHelperLib.so" {
+	<declaration>import "/home/gp/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/gridHelperLib/cmake-build-release/libgridHelperLib.so" {
     bool init_setup();
     double calculate_reward();
     bool can_move(int action, int step_length);
@@ -11,7 +11,9 @@
     void init_logging();
 };
 
-
+int x = //TAG_x;
+int y = //TAG_y;
+double yaw = //TAG_yaw;
 
 int actions_taken = 0;
 
@@ -35,8 +37,10 @@ int action = -1;
 
 // Utilitise
 const double PI_upper = 3.14;
+const double PI_lower = -3.14;
 const double PI_half_pos = 1.57;
 const double PI_half_neg = -1.57;
+const double map_granularity = //TAG_granularity_map;
 
 
 // Drone specs, all values in meters
@@ -72,7 +76,7 @@ double accum_penalty = 0;
 
 bool has_visited_turning() {
     for (i : int[0,horizon-1]) {
-        if (visited[i][0] == x &amp;&amp; visited[i][1] == y &amp;&amp; visited[i][2] == yaw){
+        if (fabs(visited[i][0] - x) &lt;=0.1 &amp;&amp; fabs(visited[i][1] - y) &lt;=0.1 &amp;&amp; fabs(visited[i][2] - yaw) &lt;=0.1){
             return true;
         }
     }
@@ -81,7 +85,7 @@ bool has_visited_turning() {
 
 bool has_visited_moving() {
     for (i : int[0,horizon-1]) {
-        if (visited[i][0] == x &amp;&amp; visited[i][1] == y){
+        if (fabs(visited[i][0] - x) &lt;=0.1 &amp;&amp; fabs(visited[i][1] - y) &lt;=0.1){
             return true;
         }
     }
@@ -204,7 +208,7 @@ broadcast chan turn_90deg_left, turn_90deg_right, turn_180deg;</declaration>
 			<source ref="id0"/>
 			<target ref="id8"/>
 			<label kind="select" x="909" y="374">step_length : int [1,2]</label>
-			<label kind="guard" x="909" y="391">moving(0,step_length)</label>
+			<label kind="guard" x="909" y="391">can_move(0,step_length)</label>
 			<label kind="assignment" x="858" y="408">current_step_length = step_length</label>
 			<nail x="892" y="408"/>
 			<nail x="1122" y="408"/>
@@ -213,7 +217,7 @@ broadcast chan turn_90deg_left, turn_90deg_right, turn_180deg;</declaration>
 			<source ref="id0"/>
 			<target ref="id7"/>
 			<label kind="select" x="943" y="297">step_length : int [1,2]</label>
-			<label kind="guard" x="943" y="314">moving(2, step_length)</label>
+			<label kind="guard" x="943" y="314">can_move(2, step_length)</label>
 			<label kind="assignment" x="901" y="331">current_step_length = step_length</label>
 			<nail x="935" y="331"/>
 			<nail x="1122" y="331"/>
@@ -222,14 +226,14 @@ broadcast chan turn_90deg_left, turn_90deg_right, turn_180deg;</declaration>
 			<source ref="id0"/>
 			<target ref="id5"/>
 			<label kind="select" x="952" y="212">step_length : int [1,2]</label>
-			<label kind="guard" x="960" y="229">moving(1, step_length)</label>
+			<label kind="guard" x="960" y="229">can_move(1, step_length)</label>
 			<label kind="assignment" x="926" y="263">current_step_length = step_length</label>
 		</transition>
 		<transition id="id24">
 			<source ref="id0"/>
 			<target ref="id6"/>
 			<label kind="select" x="909" y="119">step_length : int [1,2]</label>
-			<label kind="guard" x="909" y="136">moving(3, step_length)</label>
+			<label kind="guard" x="909" y="136">can_move(3, step_length)</label>
 			<label kind="assignment" x="901" y="153">current_step_length = step_length</label>
 		</transition>
 	</template>
@@ -239,6 +243,23 @@ broadcast chan turn_90deg_left, turn_90deg_right, turn_180deg;</declaration>
 
 void turn_drone(double yaw_dx) {
     double new_reward; 
+
+    // To update the yaw, such that visited cost can be calculated.
+    // @TODO: Make it a function call to the lib to get the yaw.
+    if(yaw &gt;=PI_upper &amp;&amp; yaw_dx &gt; 0) {
+        yaw = PI_lower + yaw_dx;
+    } else if (yaw &lt;= PI_lower &amp;&amp; yaw_dx &lt; 0) {
+        yaw = PI_upper + yaw_dx;
+    }else if(yaw + yaw_dx &gt; PI_upper) {
+        if(yaw == PI_half_pos || yaw == PI_half_neg) {
+            yaw = yaw * -1;
+        }else {
+            yaw = PI_lower + yaw_dx;
+        }
+    }else {
+        yaw = yaw + yaw_dx;
+    }
+
     turn_drone_ext(yaw);
 
     accum_penalty = accum_penalty - turning_cost;
@@ -333,8 +354,36 @@ turn_drone(half_PI_left)</label>
 		<declaration>
 clock c;
 
-void move(double dir_x, double dir_y) { 
+void move(int dir_x, int dir_y) { 
     double new_reward = 0.0;
+    double d_dir_x = 0.0;
+    double d_dir_y = 0.0;
+
+    // To update the x and y, such that visited cost can be calculated.
+    // @TODO: Make it a function call to the lib to get the x and y.
+    if(dir_x == 1) {
+        d_dir_x = 0.5;
+    }else if(dir_x == -1) {
+        d_dir_x = -0.5;
+    }else if(dir_y == 1) {
+        d_dir_y = 0.5;
+    }else if(dir_y == -1) {
+        d_dir_y = -0.5;
+    }
+
+    if(dir_x == 2) {    
+        d_dir_x = 1.0;
+    }else if(dir_x == -2) {
+        d_dir_x = -1.0;
+    }else if(dir_y == 2) {
+        d_dir_y = 1.0;
+    }else if(dir_y == -2) {
+        d_dir_y = -1.0;
+    }
+    x = x + fint(((d_dir_x) / map_granularity));
+    y = y + fint(((d_dir_y) / map_granularity));
+
+
     move_ext(dir_x, dir_y);
 
     accum_penalty = accum_penalty - moving_cost;

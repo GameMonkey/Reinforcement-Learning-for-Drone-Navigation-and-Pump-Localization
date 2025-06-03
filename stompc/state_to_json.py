@@ -38,8 +38,9 @@ def construct_drone_configuration(uppaal_state):
 
     drone_config["drone_diameter"] = uppaal_state["drone_diameter"]
     drone_config["safety_range"] = uppaal_state["safety_range"]
-    drone_config["laser_range"] = uppaal_state["laser_range"]
+    drone_config["laser_range"] = uppaal_state["range_laser"]
     drone_config["laser_range_diameter"] = uppaal_state["laser_range_diameter"]
+    drone_config["upper_pump_detection_range"] = uppaal_state["upper_pump_detection_range"]
 
     return {"drone_config": drone_config}
 
