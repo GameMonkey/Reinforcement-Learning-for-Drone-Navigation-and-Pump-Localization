@@ -10,6 +10,9 @@ extern "C" {
     bool move_ext(int dir_x, int dir_y);
     void stop_logging();
     void init_logging();
+    int get_x();
+    int get_y();
+    double get_yaw();
 }
 
 

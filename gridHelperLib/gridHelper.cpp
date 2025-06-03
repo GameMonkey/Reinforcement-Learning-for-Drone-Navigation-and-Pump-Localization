@@ -53,6 +53,22 @@ std::vector<std::vector<short>> map{};
 // Log file
 static std::ofstream log_file;
 
+
+int get_x() {
+    return x;
+}
+
+int get_y() {
+    return y;
+}
+
+double get_yaw() {
+    return yaw;
+}
+
+
+
+
 bool init_setup() {
     //log_file.open("/home/martin/Desktop/UppaalSpeedUp/log.txt");
     if (map.size() == 0) {
@@ -72,7 +88,7 @@ bool init_setup() {
         safety_range = get_safety_range();
         laser_range = get_laser_range();
         laser_range_diameter = get_laser_range_diameter();
-        upper_range_pump_detection = get_pump_detection_range() - 0.1; // Makes the Uppaal model more pessimistic than the actual world
+        upper_range_pump_detection = get_pump_detection_range() - 0.15; // Makes the Uppaal model more pessimistic than the actual world
         
         // Setting rewards and costs
         discovery_reward = get_discovery_reward();

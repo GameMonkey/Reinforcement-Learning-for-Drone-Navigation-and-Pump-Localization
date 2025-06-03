@@ -515,7 +515,12 @@ def run(template_file, template_file_ext, query_file, verifyta_path):
                     print("Actions and rewards left: ", list(zip(action_seq,reward_seq)))
                     print("\n\n")
                     ## Checking if there is a value later that is the current value plus one (epsilon) higher.
-                    if not any(x > (curr_reward + 1) for x in reward_seq):
+
+                    ## if x <= 0 and not any(x > 1 for x in reward_seq) or
+                    ##   x > 0 and not any(x > curr_reward * 1.01 for x in reward_seq)
+
+                    if ((curr_reward <= 0 and not any(x > 1 for x in reward_seq)) or
+                            (curr_reward > 0 and not any(x > curr_reward * 1.01 for x in reward_seq))):
                         print('No further action would increase the reward, moving on to next iteration...')
                         train = True
                         k = 0

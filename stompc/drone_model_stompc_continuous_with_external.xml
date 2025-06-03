@@ -9,6 +9,9 @@
     bool move_ext(int dir_x, int dir_y);
     void stop_logging();
     void init_logging();
+    int get_x();
+    int get_y();
+    double get_yaw();
 };
 
 int x = //TAG_x;
@@ -242,7 +245,7 @@ broadcast chan turn_90deg_left, turn_90deg_right, turn_180deg;</declaration>
 		<declaration>clock c;
 
 void turn_drone(double yaw_dx) {
-    double new_reward; 
+    double new_reward;
 
     // To update the yaw, such that visited cost can be calculated.
     // @TODO: Make it a function call to the lib to get the yaw.
@@ -260,7 +263,8 @@ void turn_drone(double yaw_dx) {
         yaw = yaw + yaw_dx;
     }
 
-    turn_drone_ext(yaw);
+    turn_drone_ext(yaw_dx);
+    yaw = get_yaw();
 
     accum_penalty = accum_penalty - turning_cost;
 
@@ -380,11 +384,11 @@ void move(int dir_x, int dir_y) {
     }else if(dir_y == -2) {
         d_dir_y = -1.0;
     }
-    x = x + fint(((d_dir_x) / map_granularity));
-    y = y + fint(((d_dir_y) / map_granularity));
-
 
     move_ext(dir_x, dir_y);
+    x = get_x();
+    y = get_y();
+
 
     accum_penalty = accum_penalty - moving_cost;
     actions_taken += 1;
