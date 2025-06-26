@@ -27,7 +27,7 @@ from utils import turn_drone, shield_action, build_uppaal_2d_array_string, run_p
 from utils import action_names
 from classes import DroneSpecs, TrainingParameters
 from maps import get_baseline_one_pump_config, get_baseline_big_room_config, get_baseline_tetris_room_config,get_baseline_cylinder_room_config
-
+import traceback
 
 import model_construction
 from state_to_json import construct_json_state
@@ -452,7 +452,9 @@ def run(template_file, template_file_ext, query_file, verifyta_path):
                 except Exception as e:
                     print("UPPAAL might have raised an exception, killing everything and going again.")
                     print(e)
+                    print(traceback.format_exc())
                     Popen("./killall.sh", shell=True).wait()
+                    raise e
             else:
                 try:
                     action_seq = bfs(state, drone_specs, map_config)
