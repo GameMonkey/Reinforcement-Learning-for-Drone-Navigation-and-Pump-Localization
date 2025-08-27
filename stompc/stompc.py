@@ -406,8 +406,8 @@ def run(template_file, query_file, verifyta_path):
     print("Drone responds to commands")
     # run_action_seq([4,4,4,4], 0, 0, 0)
     # Initial wait to ensure that the map is updated!
-    print("Started sleeping for 5 sec")
-    time.sleep(5)
+    print("Started sleeping for 10 sec")
+    time.sleep(10)
 
 
     #while N <= 2:
@@ -416,8 +416,8 @@ def run(template_file, query_file, verifyta_path):
 
         if train == True or k % HORIZON == 0:
             N = N + 1
-            print("Started sleeping for 5 sec")
-            time.sleep(5)
+            print("Started sleeping for 10 sec")
+            time.sleep(10)
             print("Beginning trainng for iteration {}".format(N))
 
             controller.init_simfile()
@@ -587,7 +587,7 @@ def main():
     frame_thread = threading.Thread(target=executor_frame.spin, daemon=True)
     frame_thread.start()
     print("Frame pid:", frame_thread.native_id)
-    time.sleep(2)
+    time.sleep(10)
     print("Done with Map Framer")
 
 
