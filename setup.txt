@@ -7,6 +7,12 @@ VERIFYTA_PATH="" -> place the path to and including verifyta from Uppaal
 GZ_PATH="" -> place the path to the PX4-Autopilot folder
 LAUNCH_FILE_PATH="" -> place the full path to the launch file folder
 
+# Example
+DOMAIN="0" 
+VERIFYTA_PATH="/home/<laptop_name>/Desktop/uppaal-5.0.0-linux64/bin/verifyta" 
+GZ_PATH="/home/<laptop_name>/PX4-Autopilot" 
+LAUNCH_FILE_PATH="/home/<laptop_name>/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/launch"
+
 # To run stompc code
 source /opt/ros/humble/setup.bash #not needed if both of these source are in .bashrc
 source ~/ws/install/local_setup.bash

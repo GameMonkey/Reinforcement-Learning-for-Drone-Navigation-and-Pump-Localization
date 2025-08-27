@@ -4,7 +4,7 @@ experiment_setup:
   run_settings:
     world: "Default" #takes the values: Default, Tetris, Large, Cylinder
     time_per_run: 600
-    granularity: 0.2 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
+    granularity: 0.05 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
     baseline: False
     horizon: 25
 
