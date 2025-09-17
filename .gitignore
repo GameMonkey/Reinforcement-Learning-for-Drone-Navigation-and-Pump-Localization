@@ -7,6 +7,12 @@ pumpdetection_model/outputs/model.pt
 **/.idea/*
 **/cmake-build-*/*
 
+# Drone specific folder
+Micro-XRCE-DDS-Agent/
+ws/
+PX4-Autopilot/
+.ws/
+.gz/
 
 # Project specific files
 stompc/matrix.txt
