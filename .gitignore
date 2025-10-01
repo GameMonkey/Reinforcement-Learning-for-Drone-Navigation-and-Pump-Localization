@@ -13,6 +13,7 @@ ws/
 PX4-Autopilot/
 .ws/
 .gz/
+install_*.log
 
 # Project specific files
 stompc/matrix.txt
