@@ -4,7 +4,7 @@ experiment_setup:
   run_settings:
     world: "Default" #takes the values: Default, Tetris, Large, Cylinder
     time_per_run: 600
-    granularity: 0.2 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
+    granularity: 0.05 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
     baseline: False
     horizon: 25
 
@@ -12,7 +12,7 @@ experiment_setup:
   uppaal_params:
     max-iterations: 1
     #reset-no-better: 5
-    good-runs: 100
+    good-runs: 500
     total-runs: 500
     #eval-runs: 100
     #runs-pr-state: 300
