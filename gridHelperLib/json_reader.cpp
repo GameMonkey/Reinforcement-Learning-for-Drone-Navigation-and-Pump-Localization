@@ -11,7 +11,7 @@ std::ifstream json_file;
 json data;
 
 void load_json_file() {
-    std::ifstream json_file{"/home/test/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/state.json"};
+    std::ifstream json_file{"./state.json"};
     data = json::parse(json_file);
 }
 

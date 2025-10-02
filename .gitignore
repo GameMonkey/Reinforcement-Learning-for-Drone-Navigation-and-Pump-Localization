@@ -18,6 +18,7 @@ install_*.log
 # Project specific files
 stompc/matrix.txt
 stompc/drone_model_stompc_continuous_sim.xml
+stompc/drone_model_stompc_continuous_with_external_sim.xml
 stompc/query.q
 stompc/output_parsed.txt
 stompc/output.txt
