@@ -93,7 +93,7 @@ GZ_PATH="/home/test/PX4-Autopilot"
 LAUNCH_FILE_PATH="/home/test/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/launch"
 ```
 
-The ***DOMAIN*** variable is only used to tell the program which `ROS_DOMAIN_ID` to use, however it should also be changed to match the value the the system environment variable for `ROS_DOMAIN_ID`. More information on how to change the `ROS2_DOMAIN_ID` can be found [here](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Configuring-ROS2-Environment.html#the-ros-domain-id-variable), with more information about the `ROS2_DOMAIN_ID` variable specially, [here](https://docs.ros.org/en/humble/Concepts/Intermediate/About-Domain-ID.html).
+The `DOMAIN` variable is only used to tell the program which `ROS_DOMAIN_ID` to use, however it should also be changed to match the value the the system environment variable for `ROS_DOMAIN_ID`. More information on how to change the `ROS2_DOMAIN_ID` can be found [here](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Configuring-ROS2-Environment.html#the-ros-domain-id-variable), with more information about the `ROS2_DOMAIN_ID` variable specially, [here](https://docs.ros.org/en/humble/Concepts/Intermediate/About-Domain-ID.html).
 
 
 ## Running the project
