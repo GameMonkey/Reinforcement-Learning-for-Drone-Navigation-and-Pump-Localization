@@ -1,6 +1,6 @@
 # Reinforcement Learning for Drone Navigation and Pump Localization
 
-This project is built as part of paper "Exploring Unknown Environments with Uppaal STRATEGO: Safe Reinforcement Learning for Navigation and Pump Localization" presented at [SEFM 2025](https://sefm-conference.github.io/2025/). 
+This project is built as part of the paper "Exploring Unknown Environments with Uppaal STRATEGO: Safe Reinforcement Learning for Navigation and Pump Localization" presented at [SEFM 2025](https://sefm-conference.github.io/2025/). 
 
 ## Authors
 
@@ -37,16 +37,16 @@ As part of this project, we provide an installation script that will handle the 
 
 ### Installed with the script:
 * [ROS2 Humble](https://docs.ros.org/en/humble/Installation.html),
-** and the required ROS2 packages
+	* and the required ROS2 packages
 * [Gazebo Garden](https://gazebosim.org/docs/garden/install/)
 * [PX4](https://docs.px4.io/main/en/ros/ros2_comm.html)
 * [Micro XRCE-DDS](https://micro-xrce-dds.docs.eprosima.com/en/latest/)
 * The following python packages:
-** [Strategoutil](https://pypi.org/project/strategoutil/)
-** [Numpy="1.26.4"](https://numpy.org/doc/1.26/)
-** [setuptools="70.0.0"](https://pypi.org/project/setuptools/)
-** [python-dotenv](https://pypi.org/project/python-dotenv/)
-** [psutil](https://github.com/giampaolo/psutil)
+	* [Strategoutil](https://pypi.org/project/strategoutil/)
+	* [Numpy="1.26.4"](https://numpy.org/doc/1.26/)
+	* [setuptools="70.0.0"](https://pypi.org/project/setuptools/)
+	* [python-dotenv](https://pypi.org/project/python-dotenv/)
+	* [psutil](https://github.com/giampaolo/psutil)
 
 It is expected that this project is unpacked in the default $HOME folder. Because of this, we recommend using a machine specifically for setting up and running this project.
 The script will save the various folder associated with PX4, Micro-XRCE and the workspace for ROS2 at the default $HOME folder for Ubuntu.
