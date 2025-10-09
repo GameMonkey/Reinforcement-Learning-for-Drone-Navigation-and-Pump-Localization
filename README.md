@@ -78,7 +78,7 @@ For the paper UPPAAL 5.0 was used.
 The project uses environmen files to let the program know where to locate the verifita component of UPPAAL, the Gazebo/PX4 install location and the launch file for the ROS2 packages used.
 Additionally, it is also possible to select a specific ROS2 domain ID, in case multiple people on the same network are working with ROS2. 
 
-The .env file should be placed in the root folder of the project.
+The `.env` file should be placed in the root folder of the project.
 
 The environment file have the following structure:
 ```
