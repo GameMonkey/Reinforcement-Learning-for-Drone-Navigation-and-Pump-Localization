@@ -55,7 +55,7 @@ The script will save the various folder associated with PX4, Micro-XRCE and the 
 ### How to use the script:
 To use the script, simply run the setup script like so:
 ```
-bash <file_name>.sh
+bash setup_init.sh
 ```
 
 During installation, the user will be asked if they want to add the sourcing of two ROS2 specific setup programs to the users .bashrc file.
@@ -66,6 +66,9 @@ If not, the following two lines have to be run in the terminal before running th
 source /opt/ros/humble/setup.bash
 source ~/ws/install/local_setup.bash
 ```
+
+We provide our own Slam Toolbox configuration for the online async mode that will be used with the installation script. If one wants to change the configuration, for example to use a more coarse granularity, open to `/ws/src/slam_toolbox/config/mapper_params_online_async.yaml` and change the value there.
+Save the change, go to `/ws` and run `colcon build` to build the ROS2 workspace again with the new configuration. 
 
 ### UPPAAL
 UPPAAL is not installed with the script, but can be downloaded [here](https://uppaal.org/downloads/). Installation instructions can be found on the site aswell.
@@ -97,17 +100,22 @@ The `DOMAIN` variable is only used to tell the program which `ROS_DOMAIN_ID` to 
 
 
 ## Running the project
-To run the project, we provide a script that will run all the experiment setups located in the `Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/experiments_setups`. Additionally, one can provide the desired number of runs for each of the setups. If nothing is provided, it will default to a single run.
-The script is placed in the ***stompc*** folder and should be run from there.
+To run the project, we provide a script that will run all the experiment setups located in the `Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/experiments_setups`. Additionally, one can provide the desired number of samples one wants to collect for each of the setups. If nothing is provided, it will default to a single sample.
+
+The script is placed in the `Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/` folder and should be run from there.
 
 ### Example:
 To run the script one can do the following:
 ```
 ./run-script.sh 5
 ``` 
-If no setup files are placed in the previously mentioned folder, this will run the default setup configuration 5 times. If one or more setups configurations are placed in the folder, these will be used instead, each with 5 runs.
-Each of the 5 runs will have a folder created, each named with the timestamp when the respective run began.
-After 5 runs, the script will collect each of the folders associated with the individual runs and save them in a .zip named after the configuration file that was used for the runs.
+If no setup files are placed in the previously mentioned folder, this will run the default setup configuration 5 times.
+If one or more setups configurations are placed in `Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/experiments_setups`, these will be used instead, collecting 5 samples for each of the configurations.
+
+Each of the 5 samples will have a folder created, each named with the timestamp when the respective run began.
+When 5 samples are collected, the script will collect each of the folders associated with the individual samples and save them in a .zip named after the configuration file that was used for the runs.
+
+It will then delete the sample folders, ensuring that samples collected from different experiments are not saved and associated with the wrong configuration.
 
 
 ## Experiment Configuration Setups
@@ -119,7 +127,7 @@ If the user creates custom setups, they should be placed in `stompc/experiment_s
 | ------------ | ------------------------------------------------------- | -------------------------------- |
 | world        | Which world the experiment should be in                 | Default, Tetris, Large, Cylinder |
 | time_per_run | How long each run should take, in seconds               |    			      	    | 
-| granularity  | The granularity used in the slam toolbox configuration, it is important that they match  | ideally between 0.05 and 1       | 
+| granularity  | The granularity used in the slam toolbox configuration. It is important that this value matches that granularity in the `mapper_params_online_async.yaml` file in Slam Toolbox  | ideally between 0.05 and 1       | 
 | baseline     | whether or not to use the baseline or learning approach | True, False                      |
 | horizon      | How many actions we want to learn ahead                 | Should be larger than 0          |
 
@@ -139,9 +147,9 @@ If the user creates custom setups, they should be placed in `stompc/experiment_s
 | discovery_reward | The reward when changing a cell in the map                            | Any non-negative real            |
 | pump_exploration_reward | The reward when discovering a pump in the map                  | Any non-negative real            |
 
-We do not recommend changing drone_diameter value, since it matches the drone used in this project. However if done, it should match the used drone.
-The laser_range and laser_diameter should also match the laser that it being used.
-Safety_range can be changed if one is experimenting with how close the drone should be able to get to objects.
+We do not recommend changing `drone_diameter value`, since it matches the drone used in this project. However if done, it should match the used drone.
+The `laser_range` and `laser_diameter` should also match the laser that is being used.
+`safety_range` can be changed if one is experimenting with how close the drone should be able to get to objects.
 
 | drone_specs | Description                                                           | Values                           |
 | ----------------- | ------------------------------------------------------------- | -------------------------------- |
@@ -154,6 +162,3 @@ Safety_range can be changed if one is experimenting with how close the drone sho
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
-
-
-
