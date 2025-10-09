@@ -125,7 +125,7 @@ If the user creates custom setups, they should be placed in `stompc/experiment_s
 
 | run_settings | Description                                             | Values                           |
 | ------------ | ------------------------------------------------------- | -------------------------------- |
-| world        | Which world the experiment should be in                 | Default, Tetris, Large, Cylinder |
+| world        | Which world the experiment should be in                 | "Default", "Tetris", "Large", "Cylinder" |
 | time_per_run | How long each run should take, in seconds               |    			      	    | 
 | granularity  | The granularity used in the slam toolbox configuration. It is important that this value matches that granularity in the `mapper_params_online_async.yaml` file in Slam Toolbox  | ideally between 0.05 and 1       | 
 | baseline     | whether or not to use the baseline or learning approach | True, False                      |
