@@ -1,0 +1,35 @@
+experiment_setup:
+
+  #run settings #1200 is 20 mins
+  run_settings:
+    world: "Default" #takes the values: Default, Tetris, Large, Cylinder
+    time_per_run: 600
+    granularity: 0.05 #IMPORTANT, THIS SHOULD MATCH THE GRANULARITY IN THE SLALM_TOOLBOX CONFIG
+    baseline: False
+    horizon: 25
+
+  #UPPAAL learning parameters (Implemented so that these keys are also the keys in the code. It has to be "-" in these names since that is that verifity expects.)
+  uppaal_params:
+    max-iterations: 1
+    #reset-no-better: 5
+    good-runs: 500
+    total-runs: 500
+    #eval-runs: 100
+    #runs-pr-state: 300
+
+  #Training parameters
+  training_params:
+    open: 1
+    turning_cost: 10.0
+    moving_cost: 10.0
+    visited_cost: 200.0
+    discovery_reward: 100.0
+    pump_exploration_reward: 10000000.0
+
+  #Drone specs
+  drone_specs:
+    drone_diameter: 0.6
+    safety_range: 0.4
+    laser_range: 4
+    laser_range_diameter: 3
+    upper_pump_detection_range: 1.25

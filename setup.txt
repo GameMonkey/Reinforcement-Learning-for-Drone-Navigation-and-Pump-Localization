@@ -1,0 +1,168 @@
+# Create .env file
+In order for the code to run, it is nessecary that to tell the program some locations and the current domain id ros uses.
+Start by creating a .env file in the home folder (we know this is not ideal) and place the following:
+
+DOMAIN="" - Here you place the value of your chosen ROS_DOMAIN_ID. ROS by default uses 0
+VERIFYTA_PATH="" -> place the path to and including verifyta from Uppaal
+GZ_PATH="" -> place the path to the PX4-Autopilot folder
+LAUNCH_FILE_PATH="" -> place the full path to the launch file folder
+
+# Example
+DOMAIN="0" 
+VERIFYTA_PATH="/home/<laptop_name>/Desktop/uppaal-5.0.0-linux64/bin/verifyta" 
+GZ_PATH="/home/<laptop_name>/PX4-Autopilot" 
+LAUNCH_FILE_PATH="/home/<laptop_name>/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/launch"
+
+# To run stompc code
+source /opt/ros/humble/setup.bash #not needed if both of these source are in .bashrc
+source ~/ws/install/local_setup.bash
+cd ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc
+
+For experiments, stompc can also be run using the automated script provided, run-script.sh
+example: ./run-script.sh 5 will run the stompc code 5 times, resultating in 5 runs. It looks for experiment config in the folder ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/experiment_setups. It will run all .yaml files placed in the folder, making it possible to collect samples from multiple setups.
+
+The script will handle the collection of all results and placing them in a folder corrosponding to the name of the experiment, compressing them and then deleting the folder. (WARNING: the script will place any and all folders in the finished folder that is used for compression, so make sure to that before running experiments, that no folder from previous runs are in there. However, the script should take care of the deletion and cleanup between experiment setups.)
+
+# To make sure the automatic script works (this might have been done during the installation, if so, skip this)
+    step 1: Place the 4 world files in PX4-Autopilot/Tools/simulation/gz/worlds
+	    - The four world files are default.sdf, cylinderRoom.sdf, largeRoom.sdf and tetrisRoom.sdf
+    step 2: build PX4 again using the command "make px4_sitl" from inside the PX4-Autopilot
+
+# To run rviz2
+source /opt/ros/humble/setup.bash
+rviz2 -d ~/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/rviz2_cfg/basic_cfg.rviz
+
+## To change slam params
+if installed from source in ros workspace (needs to colcon build after change):
+open ~/ws/src/slam_toolbox/config/mapper_params_online_async.yaml
+
+if installed from binaries using apt:
+vi /opt/ros/humble/share/slam_toolbox/config/mapper_params_online_async.yaml
+
+
+###############################################################################################################################
+###############################################################################################################################
+
+# Installation of ros, gz and all else.
+
+sudo apt-get update
+sudo apt-get upgrade -y
+
+
+# Installation of editor (used by us, use whatever editor is suited)
+sudo apt install git emacs -y
+
+# python dependencies
+sudo apt install python3-pip -y
+pip3 install "numpy==1.26.4"
+pip3 install "setuptools==70.0.0"
+pip3 install python-dotenv
+pip3 install psutil
+pip3 install strategoutil
+
+
+# ROS2
+sudo apt install software-properties-common
+sudo add-apt-repository universe
+
+sudo apt update && sudo apt install curl -y
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+sudo apt-get update
+
+sudo apt install ros-humble-desktop -y
+sudo apt install ros-dev-tools=1.0.1 -y
+
+sudo apt install python3-colcon-common-extensions -y
+
+## Install Gazebo
+sudo apt-get install curl lsb-release gnupg
+sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+sudo apt-get update
+sudo apt-get install gz-garden -y
+
+
+source /opt/ros/humble/setup.bash
+
+## Install PX4 without a simulator as we have manually installed Gazebo Garden.
+cd
+git clone https://github.com/PX4/PX4-Autopilot.git
+cd PX4-Autopilot
+git reset --hard e35380d6ae8196ce658b5059388593ec0c3b63d2
+git submodule update --recursive
+cd
+bash ./PX4-Autopilot/Tools/setup/ubuntu.sh --no-sim-tools
+cd PX4-Autopilot/
+# Before running the next command do the following (if the folders mentioned below isn't there, run the make command first, do the steps below and run make again):
+    1: copy the content of gazebo_worlds into the following folder "/PX4-Autopilot/Tools/simulation/gz/worlds
+    2: copy the content of gazebo_models into the following folder "/PX4-Autopilot/Tools/simulation/gz/models
+make px4_sitl
+
+## Agent for communication between ros and gazebo
+cd 
+git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
+cd Micro-XRCE-DDS-Agent
+mkdir build
+## Change _fastdds_version and _fastdds_tag to 3.2.2 in ~/Micro-XRCE-DDS-Agent/CMakeList.txt
+cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig /usr/local/lib/
+
+
+## ROS Workspace, the following can be copied and pasted into a terminal and it will take care of setup of workspace 
+cd 
+mkdir ws
+cd ws
+mkdir src
+cd src
+
+
+git clone https://github.com/PX4/px4_msgs.git
+cd px4_msgs
+git reset --hard f29c1d961e34489ef0e505c74467e980a0f0a988
+git submodule update --recursive
+cd ..
+
+git clone https://github.com/PX4/px4_ros_com.git
+cd px4_ros_com
+git reset --hard 5e46ae598447a5a3f59aa5ecbf3422dfe12261a6
+git submodule update --recursive
+
+cd ~/ws
+source /opt/ros/humble/setup.bash
+colcon build
+
+
+sudo rosdep init
+rosdep update
+
+export GZ_VERSION=garden
+
+cd ~/ws/src
+git clone https://github.com/gazebosim/ros_gz.git
+cd ros_gz
+git reset --hard b5dffdeb9ce8d99fdb502f3b1c73e20325d04c3f
+
+cd ~/ws/src
+git clone git@github.com:SteveMacenski/slam_toolbox.git -b 2.6.8
+cd ~/ws
+
+rosdep install -q -y -r --from-paths src --ignore-src --rosdistro humble
+
+git clone https://github.com/ros-perception/pointcloud_to_laserscan.git
+cd pointcloud_to_laserscan
+git reset --hard 59bf996fb3ee7db0026a5cd3ce0d2a39d2e602ea
+
+cd ~/ws
+colcon build
+
+source /opt/ros/humble/setup.bash
+source ~/ws/install/local_setup.bash
+
+## Uppaal
+Go to uppaal.org and follow install instructions

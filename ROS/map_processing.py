@@ -63,6 +63,13 @@ def process_map_data(drone_x: float, drone_y: float, map_config: MapConfig) -> S
 
     for i in range(0, len(data), width):
         row = data[i:i + width]
+        # Replacing -1 with 1 and 100 with 2, such that the matrix uses the type int[0, 3].
+        # Open: 0
+        # Unknown: 1
+        # Blocked: 2
+        # Pump: 3
+        row = [x if x != -1 else 1 for x in row]
+        row = [x if x != 100 else 2 for x in row]
         matrix.append(row)
 
     state = State(matrix, x_index, y_index, width, height, granularity, x_offset, y_offset)
@@ -70,13 +77,10 @@ def process_map_data(drone_x: float, drone_y: float, map_config: MapConfig) -> S
         pump_x_index, pump_y_index = get_map_index_of_pump(state,pump)
         #print(pump_x_index, pump_y_index)
         if (pump_x_index >= state.map_width or pump_y_index >= state.map_height 
-            or pump_x_index < 0 or pump_y_index < 0):
+            or pump_x_index < 0 or pump_y_index < 0)\
+                or matrix[pump_y_index][pump_x_index] == 1:
             continue
         elif pump.has_been_discovered == False:
-            matrix[pump_y_index][pump_x_index] = 2
-        elif pump.has_been_discovered == True and pump in map_config.fake_pumps:
-            matrix[pump_y_index][pump_x_index] = 0
-        elif pump.has_been_discovered == True and pump in map_config.pumps:
             matrix[pump_y_index][pump_x_index] = 3
 
 
@@ -92,19 +96,15 @@ def process_map_data(drone_x: float, drone_y: float, map_config: MapConfig) -> S
                     string_row.append("M")
                 if x == y_index and y == x_index:
                     string_row.append("*")
-                elif a == -1:
+                elif a == 1:
                     string_row.append("?")
                 elif a == 0:
                     string_row.append("+")
-                elif a == 100:
-                    string_row.append("-")
                 elif a == 2:
+                    string_row.append("-")
+                elif a == 3:
                     string_row.append("!")
             testfile.write(', '.join(string_row) + '\n')
             y = 0
             
     return state
-
-
-
-

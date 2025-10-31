@@ -7,7 +7,9 @@ int y = //TAG_y;
 double yaw = //TAG_yaw;
 int map_width = //TAG_width_map;
 int map_height = //TAG_height_map;
+int actions_taken = 0;
 //TAG_map;
+//TAG_visited;
 
 int current_step_length = 0;
 
@@ -58,12 +60,33 @@ const double discovery_reward = //TAG_discovery_reward;
 const double turning_cost = //TAG_turning_cost;
 const double moving_cost = //TAG_moving_cost;
 const double pump_exploration_reward = //TAG_pump_exploration_reward;
+const double visited_cost = //TAG_visited_cost;
 const bool open = //TAG_open;
+const int horizon = //TAG_horizon;
 
 double accum_reward = 0;
+double accum_penalty = 0;
 
-const double upper_range_pump_detection = 0.75;
+const double upper_range_pump_detection = //TAG_upper_pump_detection_range;
 const double lower_range_pump_detection = 0.55;
+
+bool has_visited_turning() {
+    for (i : int[0,horizon-1]) {
+        if (visited[i][0] == x &amp;&amp; visited[i][1] == y &amp;&amp; visited[i][2] == yaw){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool has_visited_moving() {
+    for (i : int[0,horizon-1]) {
+        if (visited[i][0] == x &amp;&amp; visited[i][1] == y){
+            return true;
+        }
+    }
+    return false;
+}
 
 void calculate_reward() {
     int cells_updated = 0; // The number of cells that have been discovered / changed from unknown
@@ -112,14 +135,14 @@ void calculate_reward() {
                     }
                     else if(map[j][ui] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][ui] = 3;
 
                         }
                         
                     }
                     else if(map[j][ui] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][ui] = 100;
                             j = upper_bound_y;
@@ -140,12 +163,12 @@ void calculate_reward() {
                     }
                     else if(map[j][li] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][li] = 3;
                         }
                     }
                     else if(map[j][li] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][li] = 100;
                             j = upper_bound_y;
@@ -191,14 +214,14 @@ void calculate_reward() {
 
                     }
                     else if(map[uj][i] == 2) {
-                            if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[uj][i] = 3;
                         }
                         
                     }
                     else if(map[uj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[uj][i] = 100;
                             i = upper_bound_x;
@@ -218,14 +241,14 @@ void calculate_reward() {
                         i = upper_bound_x;                   
                     }
                     else if(map[lj][i] == 2) {
-                        if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                        if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[lj][i] = 3;
                         }
                         
                     }
                     else if(map[lj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[lj][i] = 100;
                             i = upper_bound_x;
@@ -270,13 +293,13 @@ void calculate_reward() {
                     }
                     else if(map[j][ui] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][ui] = 3;
                          }
                         
                     }
                     else if(map[j][ui] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][ui] = 100;
                             j = upper_bound_y;
@@ -297,13 +320,13 @@ void calculate_reward() {
                     }
                     else if(map[j][li] == 2) {
                         if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[j][li] = 3;
                         }
                         
                     }
                     else if(map[j][li] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[j][li] = 100;
                             j = upper_bound_y;
@@ -348,14 +371,14 @@ void calculate_reward() {
                         i = upper_bound_x;
                     }
                     else if(map[uj][i] == 2) {
-                        if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                        if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[uj][i] = 3;
                         }
                         
                     }
                     else if(map[uj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[uj][i] = 100;
                             i = upper_bound_x;
@@ -375,14 +398,14 @@ void calculate_reward() {
                         i = upper_bound_x;
                     }
                     else if(map[lj][i] == 2) {
-                        if(abs(j - y) &lt;= upper_range_pump_detection_cells) {
-                            accum_reward = accum_reward + pump_exploration_reward;
+                        if(abs(i - x) &lt;= upper_range_pump_detection_cells) {
+                            accum_reward = accum_reward + (pump_exploration_reward * (1.0 / actions_taken));
                             map[lj][i] = 3;
                         }
                         
                     }
                     else if(map[lj][i] == -1) {
-                        accum_reward = accum_reward + discovery_reward;
+                        accum_reward = accum_reward + (discovery_reward * (1.0 / actions_taken));
                         if(!open){
                             map[lj][i] = 100;
                             i = upper_bound_x;
@@ -407,14 +430,7 @@ broadcast chan turn_90deg_left, turn_90deg_right, turn_180deg;</declaration>
 		<name x="5" y="5">DroneController</name>
 		<declaration>clock c;
 
-
-
-
-//          0: West (+y),
-//          1: South (+x)
-//          2: East (-y),
-//          3: North (-x)
-bool can_move(int action, double step_length) {
+bool can_move_2(int action, int step_length) {
     int N_cells_in_dir = fint((step_length / 2) / map_granularity);
     int drone_cells_to_cover = fint((drone_diameter) / map_granularity);
     int safety_range_cells = fint(safety_range / map_granularity);
@@ -423,15 +439,6 @@ bool can_move(int action, double step_length) {
         drone_cells_to_cover += 1;
     }
 
-    if(step_length == 2.0) {
-        step_length = 2.0;
-    }else if(step_length == -2.0) {
-        step_length = -2.0;
-    }else if(step_length == 2.0) {
-        step_length = 2.0;
-    }else if(step_length == -2.0) {
-        step_length = -2.0;
-    }
 
     N_cells_in_dir = fint((step_length / 2) / map_granularity);
 
@@ -514,15 +521,125 @@ bool can_move(int action, double step_length) {
         return true;
     }
     return false;
+}
+
+
+//          0: West (+y),
+//          1: South (+x)
+//          2: East (-y),
+//          3: North (-x)
+bool can_move(int action, double step_length) {
+    int N_cells_in_dir = fint((step_length / 2) / map_granularity);
+    int drone_cells_to_cover = fint((drone_diameter) / map_granularity);
+    int safety_range_cells = fint(safety_range / map_granularity);
+
+    if(drone_cells_to_cover % 2 == 0) {
+        drone_cells_to_cover += 1;
+    }
+
+
+    N_cells_in_dir = fint((step_length / 2) / map_granularity);
+
+
+    if(action == 0) {
+        int lower_bound_x = x - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_x = x +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int upper_bound_y = y + N_cells_in_dir + safety_range_cells;
+
+        int i;
+        int j;
+
+        if(lower_bound_x &lt; 0 || upper_bound_x &gt; map_width || upper_bound_y &gt; map_height) {
+            return false;
+        }
+        for(i = lower_bound_x; i &lt; upper_bound_x; i++) {
+            for(j = y + (drone_cells_to_cover / 2); j &lt; upper_bound_y; j++) {
+                if( map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }else if(action == 1) {
+        int lower_bound_y = y - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_y = y +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int upper_bound_x = x + N_cells_in_dir + safety_range_cells;
+
+        int i;
+        int j;
+
+         if(lower_bound_y &lt; 0 || upper_bound_y &gt; map_height || upper_bound_x &gt; map_width) {
+            return false;
+        }
+        for(i = x + (drone_cells_to_cover / 2); i &lt; upper_bound_x; i++) {
+            for(j = lower_bound_y; j &lt; upper_bound_y; j++) {
+                if(map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }else if(action == 2) {
+        int lower_bound_x = x - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_x = x +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int lower_bound_y = y - N_cells_in_dir - safety_range_cells;
+
+        int i;
+        int j;
+
+        if(lower_bound_x &lt; 0 || upper_bound_x &gt; map_width || lower_bound_y &lt; 0) {
+            return false;
+        }
+        for(i = lower_bound_x; i &lt; upper_bound_x; i++) {
+            for(j = y - (drone_cells_to_cover / 2); j &gt;= lower_bound_y; j--) {
+                if(map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }else if(action == 3) {
+        int lower_bound_y = y - (drone_cells_to_cover / 2) - safety_range_cells;
+        int upper_bound_y = y +  (drone_cells_to_cover / 2) + safety_range_cells;
+        int lower_bound_x = x - N_cells_in_dir - safety_range_cells;
+
+        int i;
+        int j;
+
+       if(lower_bound_y &lt; 0 ||upper_bound_y &gt; map_height || lower_bound_x &lt; 0) {
+            return false;
+        }
+        for(i = x - (drone_cells_to_cover / 2); i &gt;= lower_bound_x; i--) {
+            for(j = lower_bound_y; j &lt; upper_bound_y; j++) {
+                if(map[j][i] == 100 || map[j][i] == -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool moving(int action, int step_length){
+    if (step_length == 1) {
+        if (can_move_2(action, 2)){
+            return false;
+        }
+    }
+
+   return can_move(action, step_length); 
 }</declaration>
 		<location id="id0" x="892" y="238">
 			<name x="833" y="255">DescisionState</name>
+			<committed/>
 		</location>
 		<location id="id1" x="1419" y="246">
 		</location>
 		<location id="id2" x="620" y="238">
 		</location>
 		<location id="id3" x="892" y="85">
+			<committed/>
 		</location>
 		<location id="id4" x="892" y="-51">
 			<name x="875" y="-85">target</name>
@@ -607,7 +724,7 @@ bool can_move(int action, double step_length) {
 			<source ref="id0"/>
 			<target ref="id8"/>
 			<label kind="select" x="909" y="374">step_length : int [1,2]</label>
-			<label kind="guard" x="909" y="391">can_move(0,step_length)</label>
+			<label kind="guard" x="909" y="391">moving(0,step_length)</label>
 			<label kind="assignment" x="858" y="408">current_step_length = step_length</label>
 			<nail x="892" y="408"/>
 			<nail x="1122" y="408"/>
@@ -616,7 +733,7 @@ bool can_move(int action, double step_length) {
 			<source ref="id0"/>
 			<target ref="id7"/>
 			<label kind="select" x="943" y="297">step_length : int [1,2]</label>
-			<label kind="guard" x="943" y="314">can_move(2, step_length)</label>
+			<label kind="guard" x="943" y="314">moving(2, step_length)</label>
 			<label kind="assignment" x="901" y="331">current_step_length = step_length</label>
 			<nail x="935" y="331"/>
 			<nail x="1122" y="331"/>
@@ -625,14 +742,14 @@ bool can_move(int action, double step_length) {
 			<source ref="id0"/>
 			<target ref="id5"/>
 			<label kind="select" x="952" y="212">step_length : int [1,2]</label>
-			<label kind="guard" x="960" y="229">can_move(1, step_length)</label>
+			<label kind="guard" x="960" y="229">moving(1, step_length)</label>
 			<label kind="assignment" x="926" y="263">current_step_length = step_length</label>
 		</transition>
 		<transition id="id22">
 			<source ref="id0"/>
 			<target ref="id6"/>
 			<label kind="select" x="909" y="119">step_length : int [1,2]</label>
-			<label kind="guard" x="909" y="136">can_move(3, step_length)</label>
+			<label kind="guard" x="909" y="136">moving(3, step_length)</label>
 			<label kind="assignment" x="901" y="153">current_step_length = step_length</label>
 		</transition>
 	</template>
@@ -655,8 +772,18 @@ void turn_drone(double yaw_dx) {
         yaw = yaw + yaw_dx;
     }
 
+    accum_penalty = accum_penalty - turning_cost;
+    actions_taken += 1;
+
+    if (has_visited_turning()) {
+        accum_penalty = accum_penalty - visited_cost;
+    }else {
+        visited[actions_taken][0] = x;
+        visited[actions_taken][1] = y;
+        visited[actions_taken][2] = yaw;
+    }
+
     calculate_reward();
-    accum_reward = accum_reward - turning_cost;
 }</declaration>
 		<location id="id23" x="-59" y="-136">
 			<name x="-85" y="-119">waiting</name>
@@ -735,19 +862,14 @@ turn_drone(half_PI_left)</label>
 clock c;
 
 void move(double dir_x, double dir_y) { 
-    double my_moving_cost = moving_cost;
     if(dir_x == 1.0) {
         dir_x = 0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }else if(dir_x == -1.0) {
         dir_x = -0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }else if(dir_y == 1.0) {
         dir_y = 0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }else if(dir_y == -1.0) {
         dir_y = -0.5;
-        my_moving_cost = my_moving_cost + 20.0;
     }
 
     if(dir_x == 2.0) {    
@@ -762,9 +884,19 @@ void move(double dir_x, double dir_y) {
     x = x + fint(((dir_x) / map_granularity));
     y = y + fint(((dir_y) / map_granularity));
 
+    accum_penalty = accum_penalty - moving_cost;
+    actions_taken += 1;
+
+
+    if (has_visited_moving()) {
+        accum_penalty = accum_penalty - visited_cost;
+    }else {
+        visited[actions_taken][0] = x;
+        visited[actions_taken][1] = y;
+        visited[actions_taken][2] = yaw;
+    }
+
     calculate_reward();
-    accum_reward = accum_reward - my_moving_cost;
-    
 }</declaration>
 		<location id="id33" x="238" y="110">
 			<name x="228" y="76">waiting</name>
@@ -869,11 +1001,7 @@ system DroneController, MovingActions, TurningActions;
 	<queries>
 		<option key="--diagnostic" value="-1"/>
 		<query>
-			<formula/>
-			<comment>// Learn startegy that minimize time to target</comment>
-		</query>
-		<query>
-			<formula>strategy FastSafe = minE(distance_to_goal) [&lt;=1000]  {DroneController.DescisionState} -&gt; {x,y,yaw}  : &lt;&gt; (DroneController.target || time &gt;= 4)</formula>
+			<formula>strategy opt = maxE(accum_reward - accum_penalty) [&lt;=21]{DroneController.DescisionState,yaw,x,y}-&gt;{time} : &lt;&gt; (DroneController.target || time &gt;= 20)</formula>
 			<comment/>
 		</query>
 		<query>
@@ -881,90 +1009,7 @@ system DroneController, MovingActions, TurningActions;
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=1000;1]{x,y}: DroneController.target under FastSafe</formula>
-			<comment/>
-			<result outcome="success" type="interval" value="≥ 0.025 (95% CI)" timestamp="2024-02-19 10:25:32 +0100">
-				<option key="--diagnostic" value="-1"/>
-				<details>≥ 0.025 (95% CI)</details>
-				<plot title="Simulations (1)" xaxis="time" yaxis="value">
-					<series title="x" type="l" color="0xff0000" encoding="csv">0.0,0.0
-9.0,0.0
-9.0,1.0
-10.0,1.0
-10.0,2.0
-11.0,2.0
-11.0,3.0
-12.0,3.0
-12.0,4.0
-13.0,4.0
-13.0,5.0
-14.0,5.0
-14.0,6.0
-15.0,6.0
-					</series>
-					<series title="y" type="l" color="0x00ffff" encoding="csv">0.0,0.0
-0.0,1.0
-1.0,1.0
-1.0,2.0
-2.0,2.0
-2.0,3.0
-3.0,3.0
-3.0,4.0
-4.0,4.0
-4.0,5.0
-5.0,5.0
-5.0,6.0
-6.0,6.0
-6.0,7.0
-7.0,7.0
-7.0,8.0
-15.0,8.0
-					</series>
-					<comment/>
-				</plot>
-			</result>
-		</query>
-		<query>
-			<formula>saveStrategy("/home/sw9-bois/UPPAAL-TO-ROS-SIMULATION/uppaal_models/fast.json", FastSafe)</formula>
-			<comment/>
-			<option key="--diagnostic" value="-1"/>
-			<result outcome="success" type="quality" timestamp="2024-01-11 15:18:50 +0100">
-				<option key="--diagnostic" value="-1"/>
-			</result>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment>// Can TurningActions and MovingActions be out of the waiting state at the same time?</comment>
-		</query>
-		<query>
-			<formula>A[] !TurningActions.waiting &amp;&amp; !MovingActions.waiting</formula>
-			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-02-15 12:46:34 +0100">
-				<option key="--diagnostic" value="-1"/>
-			</result>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment/>
-		</query>
-		<query>
-			<formula>strategy FastSafeOLD = minE(time) [&lt;=1000]  {x,y} -&gt; {}  : &lt;&gt; DroneController.target</formula>
+			<formula>simulate [&lt;=100;1] {action,accum_reward} : (DroneController.target || time &gt;= 10) under opt</formula>
 			<comment/>
 		</query>
 	</queries>
