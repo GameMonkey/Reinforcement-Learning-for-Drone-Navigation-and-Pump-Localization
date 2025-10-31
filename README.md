@@ -33,7 +33,7 @@ the number of times a new plan must be synthesized by 33%.
 
 ## Setup and Installation
 The project is built to work is built using [ROS2 Humble](https://docs.ros.org/en/humble/Installation.html) on Ubuntu 22.04 LTS (Jammy Jellyfish).
-As part of this project, we provide an installation script that will handle the download, installation and setup of the required software.
+As part of this project, we provide an installation script that will handle the download, installation, and setup of the required software.
 
 ### Installed with the script:
 * [ROS2 Humble](https://docs.ros.org/en/humble/Installation.html),
@@ -41,7 +41,7 @@ As part of this project, we provide an installation script that will handle the 
 * [Gazebo Garden](https://gazebosim.org/docs/garden/install/)
 * [PX4](https://docs.px4.io/main/en/ros/ros2_comm.html)
 * [Micro XRCE-DDS](https://micro-xrce-dds.docs.eprosima.com/en/latest/)
-* The following python packages:
+* The following Python packages:
 	* [Strategoutil](https://pypi.org/project/strategoutil/)
 	* [Numpy="1.26.4"](https://numpy.org/doc/1.26/)
 	* [setuptools="70.0.0"](https://pypi.org/project/setuptools/)
@@ -49,7 +49,7 @@ As part of this project, we provide an installation script that will handle the 
 	* [psutil](https://github.com/giampaolo/psutil)
 
 It is expected that this project is unpacked in the default $HOME folder. Because of this, we recommend using a machine specifically for setting up and running this project.
-The script will save the various folder associated with PX4, Micro-XRCE and the workspace for ROS2 at the default $HOME folder for Ubuntu.
+The script will save the various folders associated with PX4, Micro-XRCE, and the workspace for ROS2 at the default $HOME folder for Ubuntu.
 
 
 ### How to use the script:
@@ -67,20 +67,20 @@ source /opt/ros/humble/setup.bash
 source ~/ws/install/local_setup.bash
 ```
 
-We provide our own Slam Toolbox configuration for the online async mode that will be used with the installation script. If one wants to change the configuration, for example to use a more coarse granularity, open to `/ws/src/slam_toolbox/config/mapper_params_online_async.yaml` and change the value there.
+We provide our own Slam Toolbox configuration for the online async mode that will be used with the installation script. If one wants to change the configuration, for example, to use a more coarse granularity, open `/ws/src/slam_toolbox/config/mapper_params_online_async.yaml` and change the value there.
 Save the change, go to `/ws` and run `colcon build` to build the ROS2 workspace again with the new configuration. 
 
 ### UPPAAL
-UPPAAL is not installed with the script, but can be downloaded [here](https://uppaal.org/downloads/). Installation instructions can be found on the site aswell.
-For the paper UPPAAL 5.0 was used.
+UPPAAL is not installed with the script, but can be downloaded [here](https://uppaal.org/downloads/). Installation instructions can be found on the site as well.
+For the paper, UPPAAL 5.0 was used.
 
 ## Running the project
-The project uses environmen files to let the program know where to locate the verifita component of UPPAAL, the Gazebo/PX4 install location and the launch file for the ROS2 packages used.
+The project uses environment files to let the program know where to locate the verifita component of UPPAAL, the Gazebo/PX4 install location, and the launch file for the ROS2 packages used.
 Additionally, it is also possible to select a specific ROS2 domain ID, in case multiple people on the same network are working with ROS2. 
 
 The `.env` file should be placed in the root folder of the project.
 
-The environment file have the following structure:
+The environment file has the following structure:
 ```
 DOMAIN="0" 
 VERIFYTA_PATH="<path to the uppaal>/bin/verifyta"
@@ -96,7 +96,7 @@ GZ_PATH="/home/test/PX4-Autopilot"
 LAUNCH_FILE_PATH="/home/test/Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/launch"
 ```
 
-The `DOMAIN` variable is only used to tell the program which `ROS_DOMAIN_ID` to use, however it should also be changed to match the value the the system environment variable for `ROS_DOMAIN_ID`. More information on how to change the `ROS2_DOMAIN_ID` can be found [here](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Configuring-ROS2-Environment.html#the-ros-domain-id-variable), with more information about the `ROS2_DOMAIN_ID` variable specially, [here](https://docs.ros.org/en/humble/Concepts/Intermediate/About-Domain-ID.html).
+The `DOMAIN` variable is only used to tell the program which `ROS_DOMAIN_ID` to use; however, it should also be changed to match the value the the system environment variable for `ROS_DOMAIN_ID`. More information on how to change the `ROS2_DOMAIN_ID` can be found [here](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Configuring-ROS2-Environment.html#the-ros-domain-id-variable), with more information about the `ROS2_DOMAIN_ID` variable specifically, [here](https://docs.ros.org/en/humble/Concepts/Intermediate/About-Domain-ID.html).
 
 
 ## Running the project
@@ -105,7 +105,7 @@ To run the project, we provide a script that will run all the experiment setups 
 The script is placed in the `Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/` folder and should be run from there.
 
 ### Example:
-To run the script one can do the following:
+To run the script, one can do the following:
 ```
 ./run-script.sh 5
 ``` 
@@ -113,14 +113,14 @@ If no setup files are placed in the previously mentioned folder, this will run t
 If one or more setups configurations are placed in `Reinforcement-Learning-for-Drone-Navigation-and-Pump-Localization/stompc/experiments_setups`, these will be used instead, collecting 5 samples for each of the configurations.
 
 Each of the 5 samples will have a folder created, each named with the timestamp when the respective run began.
-When 5 samples are collected, the script will collect each of the folders associated with the individual samples and save them in a .zip named after the configuration file that was used for the runs.
+When 5 samples are collected, the script will collect each of the folders associated with the individual samples and save them in a .zip file named after the configuration file that was used for the runs.
 
 It will then delete the sample folders, ensuring that samples collected from different experiments are not saved and associated with the wrong configuration.
 
 
 ## Experiment Configuration Setups
-In order to be able to define multiple different experiments, each with their own configuration, we have made it possible to create .yaml files describing.
-The default configuration, which can be used to test if everything have been installed currectly, can be found in `stompc/experiment_setups/default_config`.
+In order to be able to define multiple different experiments, each with its own configuration, we have made it possible to create .yaml files describing.
+The default configuration, which can be used to test if everything has been installed correctly, can be found in `stompc/experiment_setups/default_config`.
 If the user creates custom setups, they should be placed in `stompc/experiment_setups`, so that run-script.sh can use it.
 
 | run_settings | Description                                             | Values                           |
@@ -140,14 +140,14 @@ If the user creates custom setups, they should be placed in `stompc/experiment_s
 
 | training_params  | Description                                                           | Values                           |
 | ----------------- | ------------------------------------------------------------- | -------------------------------- |
-| open         | Whether or not to use the open of closed approach when updating map       | 0 or 1                           |
+| open         | Whether or not to use the open or closed approach when updating the map       | 0 or 1                           |
 | turning_cost | The cost in the reward function when taking turn actions                  | Any non-negative real            |
 | moving_cost  | The cost in the reward function when taking move actions                  | Any non-negative real            |
-| visited_cost | The cost in the reward function when ending in cells already visisted     | Any non-negative real            |
+| visited_cost | The cost in the reward function when ending in cells already visited     | Any non-negative real            |
 | discovery_reward | The reward when changing a cell in the map                            | Any non-negative real            |
 | pump_exploration_reward | The reward when discovering a pump in the map                  | Any non-negative real            |
 
-We do not recommend changing `drone_diameter value`, since it matches the drone used in this project. However if done, it should match the used drone.
+We do not recommend changing `drone_diameter value`, since it matches the drone used in this project. However, if done, it should match the used drone.
 The `laser_range` and `laser_diameter` should also match the laser that is being used.
 `safety_range` can be changed if one is experimenting with how close the drone should be able to get to objects.
 
