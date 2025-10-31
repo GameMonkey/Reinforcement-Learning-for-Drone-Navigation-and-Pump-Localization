@@ -884,7 +884,7 @@ void move(double dir_x, double dir_y) {
     x = x + fint(((dir_x) / map_granularity));
     y = y + fint(((dir_y) / map_granularity));
 
-    accum_penalty = accum_penalty;
+    accum_penalty = accum_penalty - moving_cost;
     actions_taken += 1;
 
 

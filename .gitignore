@@ -4,14 +4,29 @@ build/
 pumpdetection_model/outputs/model.pt
 .pt
 .env
-.idea/*
+**/.idea/*
+**/cmake-build-*/*
 
+# Drone specific folder
+Micro-XRCE-DDS-Agent/
+ws/
+PX4-Autopilot/
+.ws/
+.gz/
+install_*.log
 
 # Project specific files
 stompc/matrix.txt
 stompc/drone_model_stompc_continuous_sim.xml
+stompc/drone_model_stompc_continuous_with_external_sim.xml
 stompc/query.q
+stompc/output_parsed.txt
+stompc/output.txt
+stompc/state.json
 stompc/experiments/*
 stompc/results/*
 stompc/experiment_setups/*
+stompc/strategy.json
 !stompc/experiment_setups/default_config
+
+
