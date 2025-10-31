@@ -40,6 +40,7 @@ def bfs(state:State, drone_specs: DroneSpecs, map_config: MapConfig ):
         if state.map[r][c] == -1 and path_to_unknown_cell is None:
             print("Found unknown cell path: ", curr_path)
             path_to_unknown_cell = curr_path
+            return path_to_unknown_cell
 
         #No poi was found, moving on.
         for act, (dr,dc) in DIRS:

@@ -457,6 +457,7 @@ def run(template_file, template_file_ext, query_file, verifyta_path):
                     raise e
             else:
                 try:
+                    print("Running baseline")
                     action_seq = bfs(state, drone_specs, map_config)
                     print("Got action sequence from BFS approach: ", action_seq)
                     if len(action_seq) == 0:
@@ -466,6 +467,7 @@ def run(template_file, template_file_ext, query_file, verifyta_path):
                 except Exception:
                     print("An exception might have been raised during the baseline search, killing everything and going again.")
                     Popen("./killall.sh", shell=True).wait()
+                    return None
 
             copy_action_seq = [x for x in action_seq]
 
